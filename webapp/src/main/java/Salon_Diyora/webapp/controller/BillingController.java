@@ -1,26 +1,42 @@
 package Salon_Diyora.webapp.controller;
 
+import Salon_Diyora.webapp.model.Bill;
 import Salon_Diyora.webapp.model.SalonServiceItem;
-import Salon_Diyora.webapp.repository.ServiceItemRepository; // You must create this interface
+import Salon_Diyora.webapp.service.BillingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/services")
-@CrossOrigin
+@RequestMapping("/api/billing")
+@CrossOrigin(origins = "*")
 public class BillingController {
 
-    @Autowired
-    private ServiceItemRepository serviceItemRepository;
+    private final BillingService billingService;
 
-    @GetMapping
-    public List<SalonServiceItem> getAllServices() {
-        return serviceItemRepository.findAll();
+    @Autowired
+    public BillingController(BillingService billingService) {
+        this.billingService = billingService;
     }
 
-    @PostMapping
-    public SalonServiceItem addService(@RequestBody SalonServiceItem newService) {
-        return serviceItemRepository.save(newService);
+    @GetMapping("/services")
+    public List<SalonServiceItem> getCatalog() {
+        return billingService.getAllServices();
+    }
+
+    @PostMapping("/services")
+    public SalonServiceItem createService(@RequestBody SalonServiceItem item) {
+        return billingService.addService(item);
+    }
+
+    @GetMapping("/bills")
+    public List<Bill> getBills() {
+        return billingService.getAllBills();
+    }
+
+    @PostMapping("/bills")
+    public Bill createBill(@RequestBody Bill bill) {
+        return billingService.generateBill(bill);
     }
 }
