@@ -1,26 +1,36 @@
 package Salon_Diyora.webapp.controller;
 
 import Salon_Diyora.webapp.model.Review;
-import Salon_Diyora.webapp.repository.ReviewRepository; // You must create this interface
+import Salon_Diyora.webapp.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class ReviewController {
 
+    private final ReviewService reviewService;
+
     @Autowired
-    private ReviewRepository reviewRepository;
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
 
     @PostMapping
     public Review submitReview(@RequestBody Review review) {
-        return reviewRepository.save(review);
+        return reviewService.saveReview(review);
     }
 
     @GetMapping
     public List<Review> getAllReviews() {
-        return reviewRepository.findAll();
+        return reviewService.getAllReviews();
+    }
+
+    @GetMapping("/average")
+    public double getAverageRating() {
+        return reviewService.calculateAverageRating();
     }
 }
