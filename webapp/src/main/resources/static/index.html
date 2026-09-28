@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Booking</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .module { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 5px; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; max-width: 300px; display: block; }
+    </style>
+</head>
+<body>
+
+<h1>Welcome to Salon Diyora</h1>
+
+<!-- UI for IT25100951: Service & Billing Scope -->
+<div class="module">
+    <h2>Available Services</h2>
+    <ul id="serviceList">
+        <!-- Services will load here from the database -->
+    </ul>
+    <button onclick="loadServices()">Load Services</button>
+</div>
+
+<!-- UI for IT25101264: Appointment & Scheduling Scope -->
+<div class="module">
+    <h2>Book an Appointment</h2>
+    <input type="number" id="customerId" placeholder="Customer ID (e.g., 1)">
+    <input type="number" id="stylistId" placeholder="Stylist ID (e.g., 2)">
+    <input type="datetime-local" id="appointmentTime">
+    <button onclick="bookAppointment()">Book Now</button>
+</div>
+
+<script>
+    // 1. Fetching data from your Spring Boot Backend
+    function loadServices() {
+        fetch('http://localhost:8080/api/services')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('serviceList');
+                list.innerHTML = '';
+                data.forEach(service => {
+                    list.innerHTML += `<li>${service.serviceName} - Rs. ${service.price} (${service.durationMinutes} mins)</li>`;
+                });
+            })
+            .catch(error => console.error('Error fetching services:', error));
+    }
+
+    // 2. Sending data to your Spring Boot Backend
+    function bookAppointment() {
+        const customerId = document.getElementById('customerId').value;
+        const stylistId = document.getElementById('stylistId').value;
+        const appointmentTime = document.getElementById('appointmentTime').value;
+
+        const appointmentData = {
+            customerId: customerId,
+            stylistId: stylistId,
+            appointmentTime: appointmentTime
+        };
+
+        fetch('http://localhost:8080/api/appointments', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(appointmentData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert('Appointment Booked Successfully! Status: ' + data.status);
+            })
+            .catch(error => console.error('Error booking:', error));
+    }
+</script>
+</body>
+</html>
