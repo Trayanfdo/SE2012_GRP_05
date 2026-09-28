@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Salon Diyora - Customer Feedback</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        input, select, textarea, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
+        .review-card { border-bottom: 1px solid #eee; padding: 10px 0; }
+        .rating { color: #f39c12; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Leave Feedback for Salon Diyora</h2>
+
+    <input type="text" id="customerName" placeholder="Your Name" required>
+    <input type="number" id="appointmentId" placeholder="Appointment ID (Optional)">
+    <select id="rating">
+        <option value="5">5 Stars - Excellent</option>
+        <option value="4">4 Stars - Very Good</option>
+        <option value="3">3 Stars - Average</option>
+        <option value="2">2 Stars - Poor</option>
+        <option value="1">1 Star - Very Bad</option>
+    </select>
+    <textarea id="comments" rows="3" placeholder="Write your comments..."></textarea>
+    <button onclick="submitReview()">Submit Review</button>
+
+    <hr>
+    <h3>Recent Reviews (Average Rating: <span id="avgRating">0.0</span>/5)</h3>
+    <div id="reviewsList"></div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8080/api/reviews';
+
+    function loadReviews() {
+        fetch(API_URL)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('reviewsList');
+                list.innerHTML = '';
+                data.forEach(r => {
+                    list.innerHTML += `
+                        <div class="review-card">
+                            <strong>${r.customerName}</strong> <span class="rating">★ ${r.rating}/5</span>
+                            <p>${r.comments || 'No comment provided.'}</p>
+                            <small style="color: #777;">${new Date(r.createdAt).toLocaleString()}</small>
+                        </div>
+                    `;
+                });
+            });
+
+        fetch(`${API_URL}/average`)
+            .then(res => res.text())
+            .then(avg => document.getElementById('avgRating').innerText = avg);
+    }
+
+    function submitReview() {
+        const review = {
+            customerName: document.getElementById('customerName').value,
+            appointmentId: document.getElementById('appointmentId').value || null,
+            rating: parseInt(document.getElementById('rating').value),
+            comments: document.getElementById('comments').value
+        };
+
+        fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(review)
+        })
+            .then(res => res.json())
+            .then(() => {
+                alert('Thank you for your feedback!');
+                document.getElementById('comments').value = '';
+                document.getElementById('customerName').value = '';
+                loadReviews();
+            });
+    }
+
+    window.onload = loadReviews;
+</script>
+</body>
+</html>
