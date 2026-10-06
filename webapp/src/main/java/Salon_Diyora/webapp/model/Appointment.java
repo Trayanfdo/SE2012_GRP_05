@@ -1,32 +1,89 @@
 package Salon_Diyora.webapp.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Entity
+@Table(name = "Appointment")
 public class Appointment {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "AppointmentID")
+    private Integer appointmentId;
 
-    private Long customerId;
-    private Long stylistId;
-    private LocalDateTime appointmentTime;
-    private String status; // e.g., "PENDING", "CONFIRMED"
+    @Column(name = "CustomerID")
+    private Integer customerId;
 
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    @Column(name = "StaffID")
+    private Integer staffId;
 
-    public Long getCustomerId() { return customerId; }
-    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+    @Column(name = "AppointmentDate")
+    private LocalDate appointmentDate;
 
-    public Long getStylistId() { return stylistId; }
-    public void setStylistId(Long stylistId) { this.stylistId = stylistId; }
+    @Column(name = "StartTime")
+    private LocalTime startTime;
 
-    public LocalDateTime getAppointmentTime() { return appointmentTime; }
-    public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
+    @Column(name = "EndTime")
+    private LocalTime endTime;
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    @Column(name = "status")
+    private String status;
+
+    public Integer getAppointmentId() {
+        return appointmentId;
+    }
+
+    public void setAppointmentId(Integer appointmentId) {
+        this.appointmentId = appointmentId;
+    }
+
+    public Integer getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(Integer customerId) {
+        this.customerId = customerId;
+    }
+
+    public Integer getStaffId() {
+        return staffId;
+    }
+
+    public void setStaffId(Integer staffId) {
+        this.staffId = staffId;
+    }
+
+    public LocalDate getAppointmentDate() {
+        return appointmentDate;
+    }
+
+    public void setAppointmentDate(LocalDate appointmentDate) {
+        this.appointmentDate = appointmentDate;
+    }
+
+    public LocalTime getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(LocalTime startTime) {
+        this.startTime = startTime;
+    }
+
+    public LocalTime getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(LocalTime endTime) {
+        this.endTime = endTime;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 }

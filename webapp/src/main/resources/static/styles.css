@@ -34,6 +34,35 @@ body {
     font-weight: 600;
 }
 
+/* Navigation Bar Styling */
+.nav-bar {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.nav-bar a {
+    color: #ffffff;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.15);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.nav-bar a:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+
+.nav-bar a.active {
+    background-color: #ffffff;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
 /* Main Layout */
 .container {
     max-width: 1000px;
