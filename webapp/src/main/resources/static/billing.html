@@ -2,44 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Salon Diyora - Services & Billing</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f4f4f9; padding: 20px; }
-    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); display: flex; gap: 20px; }
-    .column { flex: 1; }
-    input, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    button { background-color: #007bff; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background-color: #0056b3; }
-    .item-card { border-bottom: 1px solid #eee; padding: 10px 0; }
-    .price { color: #28a745; font-weight: bold; }
-  </style>
+  <!-- Link to the shared CSS file -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<div class="header">
+  <h1>Salon Diyora</h1>
+  <p>Service Catalogue & Billing System</p>
+</div>
+
 <div class="container">
-  <!-- Owner/Staff View: Manage Services -->
-  <div class="column">
+  <!-- Manage Services -->
+  <div class="module-card">
     <h2>Add New Service</h2>
     <input type="text" id="serviceName" placeholder="Service Name (e.g., Haircut)" required>
     <input type="number" id="price" placeholder="Price (LKR)" required>
     <input type="number" id="duration" placeholder="Duration (Minutes)" required>
-    <button onclick="addService()">Add Service to Catalogue</button>
+    <button onclick="addService()">Add to Catalogue</button>
 
-    <hr>
-    <h3>Service Catalogue</h3>
-    <div id="serviceList"></div>
+    <hr style="border: 1px solid #eee; margin: 25px 0;">
+
+    <h2>Service Catalogue</h2>
+    <ul id="serviceList">
+      <div id="catalogList"></div>
+    </ul>
   </div>
 
-  <!-- Staff View: Generate Bill -->
-  <div class="column" style="border-left: 2px solid #eee; padding-left: 20px;">
+  <!-- Generate Bill -->
+  <div class="module-card">
     <h2>Generate Bill</h2>
     <input type="number" id="customerId" placeholder="Customer ID" required>
     <input type="number" id="totalAmount" placeholder="Total Amount (LKR)" required>
-    <button onclick="generateBill()" style="background-color: #28a745;">Process Payment</button>
+    <button class="btn-book" onclick="generateBill()">Process Payment</button>
 
-    <hr>
-    <h3>Recent Transactions</h3>
-    <div id="billList"></div>
+    <hr style="border: 1px solid #eee; margin: 25px 0;">
+
+    <h2>Recent Transactions</h2>
+    <ul id="serviceList">
+      <div id="billList"></div>
+    </ul>
   </div>
 </div>
 
@@ -47,32 +51,31 @@
   const API_URL = 'http://localhost:8080/api/billing';
 
   function loadData() {
-    // Load Services
     fetch(`${API_URL}/services`)
             .then(res => res.json())
             .then(data => {
-              const list = document.getElementById('serviceList');
+              const list = document.getElementById('catalogList');
               list.innerHTML = '';
               data.forEach(s => {
-                list.innerHTML += `<div class="item-card">
-                        <strong>${s.serviceName}</strong> - <span class="price">Rs. ${s.price}</span><br>
-                        <small>${s.durationMinutes} mins</small>
-                    </div>`;
+                list.innerHTML += `
+                            <li>
+                                <span><strong>${s.serviceName}</strong><br><small>⏱ ${s.durationMinutes} mins</small></span>
+                                <span class="service-price">Rs. ${s.price}</span>
+                            </li>`;
               });
             });
 
-    // Load Bills
     fetch(`${API_URL}/bills`)
             .then(res => res.json())
             .then(data => {
               const list = document.getElementById('billList');
               list.innerHTML = '';
               data.forEach(b => {
-                list.innerHTML += `<div class="item-card">
-                        <strong>Customer ID: ${b.customerId}</strong> <br>
-                        <span class="price">Paid: Rs. ${b.totalAmount}</span><br>
-                        <small>${new Date(b.billingDate).toLocaleString()}</small>
-                    </div>`;
+                list.innerHTML += `
+                            <li>
+                                <span><strong>Customer ID: ${b.customerId}</strong><br><small>${new Date(b.billingDate).toLocaleString()}</small></span>
+                                <span class="service-price" style="color: var(--secondary-color);">Rs. ${b.totalAmount}</span>
+                            </li>`;
               });
             });
   }
@@ -83,15 +86,11 @@
       price: parseFloat(document.getElementById('price').value),
       durationMinutes: parseInt(document.getElementById('duration').value)
     };
-
     fetch(`${API_URL}/services`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(service)
-    }).then(() => {
-      alert('Service Added!');
-      loadData();
-    });
+    }).then(() => { alert('Service Added!'); loadData(); });
   }
 
   function generateBill() {
@@ -99,17 +98,12 @@
       customerId: parseInt(document.getElementById('customerId').value),
       totalAmount: parseFloat(document.getElementById('totalAmount').value)
     };
-
     fetch(`${API_URL}/bills`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bill)
-    }).then(() => {
-      alert('Bill Generated Successfully!');
-      loadData();
-    });
+    }).then(() => { alert('Bill Generated Successfully!'); loadData(); });
   }
-
   window.onload = loadData;
 </script>
 </body>

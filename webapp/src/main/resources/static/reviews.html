@@ -2,36 +2,44 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Diyora - Customer Feedback</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 30px; background-color: #f9f9f9; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        input, select, textarea, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .review-card { border-bottom: 1px solid #eee; padding: 10px 0; }
-        .rating { color: #f39c12; font-weight: bold; }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
+<div class="header">
+    <h1>Salon Diyora</h1>
+    <p>Customer Feedback & Reports</p>
+</div>
+
 <div class="container">
-    <h2>Leave Feedback for Salon Diyora</h2>
+    <!-- Leave Feedback Form -->
+    <div class="module-card">
+        <h2>Leave a Review</h2>
+        <input type="text" id="customerName" placeholder="Your Name" required>
+        <input type="number" id="appointmentId" placeholder="Appointment ID (Optional)">
+        <select id="rating" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Poppins', sans-serif;">
+            <option value="5">⭐⭐⭐⭐⭐ (5 Stars - Excellent)</option>
+            <option value="4">⭐⭐⭐⭐ (4 Stars - Very Good)</option>
+            <option value="3">⭐⭐⭐ (3 Stars - Average)</option>
+            <option value="2">⭐⭐ (2 Stars - Poor)</option>
+            <option value="1">⭐ (1 Star - Very Bad)</option>
+        </select>
+        <textarea id="comments" rows="3" placeholder="Write your comments here..." style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Poppins', sans-serif; resize: vertical; box-sizing: border-box;"></textarea>
+        <button class="btn-book" onclick="submitReview()">Submit Feedback</button>
+    </div>
 
-    <input type="text" id="customerName" placeholder="Your Name" required>
-    <input type="number" id="appointmentId" placeholder="Appointment ID (Optional)">
-    <select id="rating">
-        <option value="5">5 Stars - Excellent</option>
-        <option value="4">4 Stars - Very Good</option>
-        <option value="3">3 Stars - Average</option>
-        <option value="2">2 Stars - Poor</option>
-        <option value="1">1 Star - Very Bad</option>
-    </select>
-    <textarea id="comments" rows="3" placeholder="Write your comments..."></textarea>
-    <button onclick="submitReview()">Submit Review</button>
-
-    <hr>
-    <h3>Recent Reviews (Average Rating: <span id="avgRating">0.0</span>/5)</h3>
-    <div id="reviewsList"></div>
+    <!-- Recent Reviews -->
+    <div class="module-card">
+        <h2>Recent Reviews</h2>
+        <p style="text-align: center; font-size: 1.2rem; font-weight: 600; color: var(--primary-color);">
+            Salon Average Rating: <span id="avgRating">0.0</span>/5
+        </p>
+        <ul id="serviceList">
+            <div id="reviewsList"></div>
+        </ul>
+    </div>
 </div>
 
 <script>
@@ -43,14 +51,19 @@
             .then(data => {
                 const list = document.getElementById('reviewsList');
                 list.innerHTML = '';
+                if(data.length === 0) list.innerHTML = '<li>No reviews yet.</li>';
+
                 data.forEach(r => {
                     list.innerHTML += `
-                        <div class="review-card">
-                            <strong>${r.customerName}</strong> <span class="rating">★ ${r.rating}/5</span>
-                            <p>${r.comments || 'No comment provided.'}</p>
-                            <small style="color: #777;">${new Date(r.createdAt).toLocaleString()}</small>
-                        </div>
-                    `;
+                            <li style="flex-direction: column; align-items: flex-start;">
+                                <div style="width: 100%; display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                    <strong>${r.customerName}</strong>
+                                    <span style="color: #f39c12; font-weight: bold;">★ ${r.rating}/5</span>
+                                </div>
+                                <p style="margin: 0 0 10px 0; color: #555;">"${r.comments || 'No comment provided.'}"</p>
+                                <small style="color: #999;">${new Date(r.createdAt).toLocaleString()}</small>
+                            </li>
+                        `;
                 });
             });
 
@@ -80,7 +93,6 @@
                 loadReviews();
             });
     }
-
     window.onload = loadReviews;
 </script>
 </body>

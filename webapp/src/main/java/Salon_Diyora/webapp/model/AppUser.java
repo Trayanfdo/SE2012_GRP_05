@@ -3,14 +3,43 @@ package Salon_Diyora.webapp.model;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "users")
 public class AppUser {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String name;
-    private String phone; // Used for bookings since customers currently call in
-    private String role; // "CUSTOMER", "STYLIST", "OWNER"
 
-    // Remember to generate Getters and Setters here
+    @Column(unique = true)
+    private String phone; // Used as the login username since customers call in
+
+    private String password;
+    private String role; // "CUSTOMER", "STYLIST", "RECEPTIONIST", "OWNER"
+
+    public AppUser() {}
+
+    public AppUser(String name, String phone, String password, String role) {
+        this.name = name;
+        this.phone = phone;
+        this.password = password;
+        this.role = role;
+    }
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
+
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
 }

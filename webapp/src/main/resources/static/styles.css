@@ -1,0 +1,135 @@
+/* Import a modern, elegant font for the salon */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+:root {
+    --primary-color: #5936a2; /* Deep purple */
+    --secondary-color: #28a745; /* Success green for booking */
+    --background-color: #f8f9fa;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --border-radius: 10px;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
+
+/* Header Styling */
+.header {
+    background-color: var(--primary-color);
+    color: white;
+    text-align: center;
+    padding: 20px 0;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 600;
+}
+
+/* Main Layout */
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    gap: 30px;
+    padding: 0 20px;
+}
+
+/* Card Styling for Modules */
+.module-card {
+    background: var(--card-bg);
+    flex: 1;
+    padding: 30px;
+    border-radius: var(--border-radius);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.05);
+    border-top: 5px solid var(--primary-color);
+}
+
+.module-card h2 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Form Inputs */
+input[type="number"],
+input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* Buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+button:hover {
+    background-color: #452980;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.btn-book {
+    background-color: var(--secondary-color);
+}
+
+.btn-book:hover {
+    background-color: #218838;
+}
+
+/* Service List Styling */
+#serviceList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+#serviceList li {
+    background: #fdfdfd;
+    border: 1px solid #eee;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.service-price {
+    font-weight: 600;
+    color: var(--primary-color);
+}

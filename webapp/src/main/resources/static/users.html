@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Account & Staff</title>
+    <!-- Link to the shared CSS file -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="header">
+    <h1>Salon Diyora</h1>
+    <p>Customer Accounts & Staff Directory</p>
+</div>
+
+<div class="container">
+    <!-- Registration / Login Section -->
+    <div class="module-card">
+        <h2>Customer Login</h2>
+        <input type="text" id="loginPhone" placeholder="Phone Number" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+        <div id="loginResult" style="margin-top: 15px; color: var(--secondary-color); font-weight: 600; text-align: center;"></div>
+
+        <hr style="border: 1px solid #eee; margin: 25px 0;">
+
+        <h2>Register New Account</h2>
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regPhone" placeholder="Phone Number" required>
+        <input type="password" id="regPassword" placeholder="Password" required>
+        <select id="regRole" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Poppins', sans-serif;">
+            <option value="CUSTOMER">Customer</option>
+            <option value="STYLIST">Stylist (Staff)</option>
+        </select>
+        <button class="btn-book" onclick="register()">Create Account</button>
+    </div>
+
+    <!-- Staff Profiles Section -->
+    <div class="module-card">
+        <h2>Our Stylists</h2>
+        <button onclick="loadStaff()" style="background-color: var(--secondary-color); margin-bottom: 20px;">Refresh Staff List</button>
+        <ul id="serviceList">
+            <div id="staffList">
+                <!-- Staff profiles will load here -->
+                <li style="color: #888; justify-content: center;">Click refresh to load staff</li>
+            </div>
+        </ul>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8080/api/users';
+
+    function register() {
+        const user = {
+            name: document.getElementById('regName').value,
+            phone: document.getElementById('regPhone').value,
+            password: document.getElementById('regPassword').value,
+            role: document.getElementById('regRole').value
+        };
+        fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        }).then(res => res.json()).then(data => {
+            alert('Registration Successful for: ' + data.name);
+            loadStaff();
+        });
+    }
+
+    function login() {
+        const credentials = {
+            phone: document.getElementById('loginPhone').value,
+            password: document.getElementById('loginPassword').value
+        };
+        fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
+        }).then(res => res.text()).then(message => {
+            document.getElementById('loginResult').innerText = message;
+        });
+    }
+
+    function loadStaff() {
+        fetch(`${API_URL}/staff`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('staffList');
+                list.innerHTML = '';
+                if (data.length === 0) {
+                    list.innerHTML = '<li style="color: red;">No stylists found.</li>';
+                    return;
+                }
+                data.forEach(staff => {
+                    list.innerHTML += `
+                            <li>
+                                <span>
+                                    <strong>${staff.name}</strong><br>
+                                    <small style="color: #666;">Contact: ${staff.phone}</small>
+                                </span>
+                                <span style="background: var(--primary-color); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                    ${staff.role}
+                                </span>
+                            </li>
+                        `;
+                });
+            });
+    }
+    window.onload = loadStaff;
+</script>
+</body>
+</html>
