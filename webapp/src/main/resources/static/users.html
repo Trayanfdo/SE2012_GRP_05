@@ -1,9 +1,10 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Salon Diyora - Account & Staff</title>
+    <title>Salon Diyora - Customer Login & Staff</title>
     <!-- Link to the shared CSS file -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -24,6 +25,11 @@
     <!-- Registration / Login Section -->
     <div class="module-card">
         <h2>Customer Login</h2>
+        <p style="text-align: center; color: #777; margin-bottom: 20px;">
+            Welcome back! Please log in to your account.
+        </p>
+
+        ```
         <input type="text" id="loginPhone" placeholder="Phone Number" required>
         <input type="password" id="loginPassword" placeholder="Password" required>
         <button onclick="login()">Login</button>
@@ -35,24 +41,34 @@
         <input type="text" id="regName" placeholder="Full Name" required>
         <input type="text" id="regPhone" placeholder="Phone Number" required>
         <input type="password" id="regPassword" placeholder="Password" required>
+
         <select id="regRole" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Poppins', sans-serif;">
             <option value="CUSTOMER">Customer</option>
             <option value="STYLIST">Stylist (Staff)</option>
         </select>
+
         <button class="btn-book" onclick="register()">Create Account</button>
     </div>
 
     <!-- Staff Profiles Section -->
     <div class="module-card">
         <h2>Our Stylists</h2>
-        <button onclick="loadStaff()" style="background-color: var(--secondary-color); margin-bottom: 20px;">Refresh Staff List</button>
+
+        <button onclick="loadStaff()" style="background-color: var(--secondary-color); margin-bottom: 20px;">
+            Refresh Staff List
+        </button>
+
         <ul id="serviceList">
             <div id="staffList">
                 <!-- Staff profiles will load here -->
-                <li style="color: #888; justify-content: center;">Click refresh to load staff</li>
+                <li style="color: #888; justify-content: center;">
+                    Click refresh to load staff
+                </li>
             </div>
         </ul>
     </div>
+    ```
+
 </div>
 
 <script>
@@ -65,14 +81,17 @@
             password: document.getElementById('regPassword').value,
             role: document.getElementById('regRole').value
         };
+
         fetch(`${API_URL}/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user)
-        }).then(res => res.json()).then(data => {
-            alert('Registration Successful for: ' + data.name);
-            loadStaff();
-        });
+        })
+            .then(res => res.json())
+            .then(data => {
+                alert('Registration Successful for: ' + data.name);
+                loadStaff();
+            });
     }
 
     function login() {
@@ -80,13 +99,16 @@
             phone: document.getElementById('loginPhone').value,
             password: document.getElementById('loginPassword').value
         };
+
         fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(credentials)
-        }).then(res => res.text()).then(message => {
-            document.getElementById('loginResult').innerText = message;
-        });
+        })
+            .then(res => res.text())
+            .then(message => {
+                document.getElementById('loginResult').innerText = message;
+            });
     }
 
     function loadStaff() {
@@ -95,26 +117,30 @@
             .then(data => {
                 const list = document.getElementById('staffList');
                 list.innerHTML = '';
+
                 if (data.length === 0) {
                     list.innerHTML = '<li style="color: red;">No stylists found.</li>';
                     return;
                 }
+
                 data.forEach(staff => {
                     list.innerHTML += `
-                            <li>
-                                <span>
-                                    <strong>${staff.name}</strong><br>
-                                    <small style="color: #666;">Contact: ${staff.phone}</small>
-                                </span>
-                                <span style="background: var(--primary-color); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
-                                    ${staff.role}
-                                </span>
-                            </li>
-                        `;
+                        <li>
+                            <span>
+                                <strong>${staff.name}</strong><br>
+                                <small style="color: #666;">Contact: ${staff.phone}</small>
+                            </span>
+                            <span style="background: var(--primary-color); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                ${staff.role}
+                            </span>
+                        </li>
+                    `;
                 });
             });
     }
+
     window.onload = loadStaff;
 </script>
+
 </body>
 </html>
