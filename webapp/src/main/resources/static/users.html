@@ -1,9 +1,15 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<<<<<<< HEAD
     <title>Salon Diyora - Account & Staff</title>
+=======
+    <title>Salon Diyora - Customer Login & Staff</title>
+    <!-- Link to the shared CSS file -->
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
     <link rel="stylesheet" href="styles.css">
     <style>
         .btn-action {
@@ -56,14 +62,62 @@
 </div>
 
 <div class="container">
+<<<<<<< HEAD
+=======
+    <!-- Registration / Login Section -->
+    <div class="module-card">
+        <h2>Customer Login</h2>
+        <p style="text-align: center; color: #777; margin-bottom: 20px;">
+            Welcome back! Please log in to your account.
+        </p>
+
+        ```
+        <input type="text" id="loginPhone" placeholder="Phone Number" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+        <div id="loginResult" style="margin-top: 15px; color: var(--secondary-color); font-weight: 600; text-align: center;"></div>
+
+        <hr style="border: 1px solid #eee; margin: 25px 0;">
+
+        <h2>Register New Account</h2>
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regPhone" placeholder="Phone Number" required>
+        <input type="password" id="regPassword" placeholder="Password" required>
+
+        <select id="regRole" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-family: 'Poppins', sans-serif;">
+            <option value="CUSTOMER">Customer</option>
+            <option value="STYLIST">Stylist (Staff)</option>
+        </select>
+
+        <button class="btn-book" onclick="register()">Create Account</button>
+    </div>
+
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
     <!-- Staff Profiles Section -->
     <div class="module-card" style="width: 100%;">
         <h2>Our Stylists</h2>
+<<<<<<< HEAD
         <button onclick="loadStaff()" style="background-color: var(--secondary-color); margin-bottom: 20px;">Refresh Staff List</button>
         <ul id="staffList" style="list-style: none; padding: 0;">
             <li style="color: #888; text-align: center;">Click refresh to load staff</li>
+=======
+
+        <button onclick="loadStaff()" style="background-color: var(--secondary-color); margin-bottom: 20px;">
+            Refresh Staff List
+        </button>
+
+        <ul id="serviceList">
+            <div id="staffList">
+                <!-- Staff profiles will load here -->
+                <li style="color: #888; justify-content: center;">
+                    Click refresh to load staff
+                </li>
+            </div>
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
         </ul>
     </div>
+    ```
+
 </div>
 
 <!-- Edit Stylist Modal Popup -->
@@ -86,7 +140,48 @@
 </div>
 
 <script>
+<<<<<<< HEAD
     const API_URL = 'http://localhost:8081/api/users';
+=======
+    const API_URL = 'http://localhost:8080/api/users';
+
+    function register() {
+        const user = {
+            name: document.getElementById('regName').value,
+            phone: document.getElementById('regPhone').value,
+            password: document.getElementById('regPassword').value,
+            role: document.getElementById('regRole').value
+        };
+
+        fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        })
+            .then(res => res.json())
+            .then(data => {
+                alert('Registration Successful for: ' + data.name);
+                loadStaff();
+            });
+    }
+
+    function login() {
+        const credentials = {
+            phone: document.getElementById('loginPhone').value,
+            password: document.getElementById('loginPassword').value
+        };
+
+        fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(credentials)
+        })
+            .then(res => res.text())
+            .then(message => {
+                document.getElementById('loginResult').innerText = message;
+            });
+    }
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
 
     function loadStaff() {
         fetch(`${API_URL}/staff`)
@@ -94,12 +189,20 @@
             .then(data => {
                 const list = document.getElementById('staffList');
                 list.innerHTML = '';
+<<<<<<< HEAD
                 if (!data || data.length === 0) {
                     list.innerHTML = '<li style="color: red; text-align: center;">No stylists found.</li>';
+=======
+
+                if (data.length === 0) {
+                    list.innerHTML = '<li style="color: red;">No stylists found.</li>';
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
                     return;
                 }
+
                 data.forEach(staff => {
                     list.innerHTML += `
+<<<<<<< HEAD
                             <li style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;">
                                 <span>
                                     <strong>${staff.name}</strong> (ID: ${staff.id})<br>
@@ -112,11 +215,24 @@
                                 </div>
                             </li>
                         `;
+=======
+                        <li>
+                            <span>
+                                <strong>${staff.name}</strong><br>
+                                <small style="color: #666;">Contact: ${staff.phone}</small>
+                            </span>
+                            <span style="background: var(--primary-color); color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                ${staff.role}
+                            </span>
+                        </li>
+                    `;
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
                 });
             })
             .catch(err => console.error('Error fetching staff list:', err));
     }
 
+<<<<<<< HEAD
     // Delete Stylist Function
     function deleteStylist(id) {
         if (confirm(`Are you sure you want to delete stylist ID ${id}?`)) {
@@ -171,7 +287,10 @@
             .catch(err => console.error('Error updating stylist:', err));
     }
 
+=======
+>>>>>>> 3029269b1166f7134ebdd85d727165d2fe5bef9d
     window.onload = loadStaff;
 </script>
+
 </body>
 </html>
