@@ -9,10 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface UserRepository extends JpaRepository<AppUser, Long> {
-
-    // Used for user Login
     Optional<AppUser> findByPhoneAndPassword(String phone, String password);
-
-    // Used to display Staff Profiles
-    List<AppUser> findByRole(String role);
+    List<AppUser> findByRoleIn(List<String> roles);
 }

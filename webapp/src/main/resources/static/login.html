@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Login & Register</title>
+    <!-- FontAwesome CDN for standard vector eye icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .module-card input[type="text"],
+        .module-card input[type="password"],
+        .module-card select {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .module-card input:focus,
+        .module-card select:focus {
+            outline: none;
+            border-color: var(--primary-color, #5936a2);
+            box-shadow: 0 0 0 3px rgba(89, 54, 162, 0.15);
+        }
+
+        .module-card h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            color: var(--primary-color, #5936a2);
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Salon Diyora</h1>
+    <p>Customer & Staff Portal</p>
+</div>
+
+<div class="container">
+    <!-- User Login Module -->
+    <div class="module-card">
+        <h2>User Login</h2>
+        <input type="text" id="loginPhone" placeholder="Enter Phone Number (e.g., 0771234567)" required>
+
+        <!-- Password Field with Eye Icon -->
+        <div class="password-container">
+            <input type="password" id="loginPassword" placeholder="Enter Password" required>
+            <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('loginPassword', this)"></i>
+        </div>
+
+        <button onclick="performLogin()">Login</button>
+        <div id="loginMessage" style="margin-top: 15px; text-align: center; font-weight: 600;"></div>
+    </div>
+
+    <!-- Registration Module -->
+    <div class="module-card">
+        <h2>Create New Account</h2>
+        <input type="text" id="regName" placeholder="Full Name" required>
+        <input type="text" id="regPhone" placeholder="Phone Number" required>
+
+        <!-- Password Field with Eye Icon -->
+        <div class="password-container">
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('regPassword', this)"></i>
+        </div>
+
+        <select id="regRole">
+            <option value="CUSTOMER">Customer</option>
+            <option value="STYLIST">Stylist (Staff)</option>
+            <option value="RECEPTIONIST">Receptionist</option>
+            <option value="OWNER">Salon Owner</option>
+        </select>
+
+        <button class="btn-book" onclick="performRegistration()">Register Account</button>
+        <div id="regMessage" style="margin-top: 15px; text-align: center; font-weight: 600;"></div>
+    </div>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:8081/api/users';
+
+    // Show / Hide Password function using FontAwesome icon toggling
+    function togglePasswordVisibility(inputId, iconElement) {
+        const passwordInput = document.getElementById(inputId);
+        if (!passwordInput) return;
+
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            iconElement.classList.remove('fa-eye');
+            iconElement.classList.add('fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            iconElement.classList.remove('fa-eye-slash');
+            iconElement.classList.add('fa-eye');
+        }
+    }
+
+    function performLogin() {
+        const phone = document.getElementById('loginPhone').value;
+        const password = document.getElementById('loginPassword').value;
+        const msgBox = document.getElementById('loginMessage');
+
+        if (!phone || !password) {
+            msgBox.style.color = 'red';
+            msgBox.innerText = 'Please enter both phone number and password.';
+            return;
+        }
+
+        fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, password })
+        })
+            .then(async res => {
+                if (!res.ok) {
+                    const err = await res.text();
+                    throw new Error(err);
+                }
+                return res.json();
+            })
+            .then(user => {
+                msgBox.style.color = 'var(--secondary-color, #28a745)';
+                msgBox.innerText = `✅ Welcome ${user.name}! Redirecting...`;
+                sessionStorage.setItem('currentUser', JSON.stringify(user));
+
+                // Route to role dashboard matching use case diagram
+                setTimeout(() => {
+                    const role = user.role.toUpperCase();
+                    if (role === 'OWNER' || role === 'SALON OWNER') {
+                        window.location.href = 'owner-dashboard.html';
+                    } else if (role === 'RECEPTIONIST') {
+                        window.location.href = 'receptionist-dashboard.html';
+                    } else if (role === 'STYLIST' || role === 'STAFF') {
+                        window.location.href = 'stylist-dashboard.html';
+                    } else {
+                        window.location.href = 'customer-dashboard.html';
+                    }
+                }, 1200);
+            })
+            .catch(err => {
+                msgBox.style.color = 'red';
+                msgBox.innerText = err.message || 'Login failed.';
+            });
+    }
+
+    function performRegistration() {
+        const name = document.getElementById('regName').value;
+        const phone = document.getElementById('regPhone').value;
+        const password = document.getElementById('regPassword').value;
+        const role = document.getElementById('regRole').value;
+        const msgBox = document.getElementById('regMessage');
+
+        if (!name || !phone || !password) {
+            msgBox.style.color = 'red';
+            msgBox.innerText = 'Please fill out all fields.';
+            return;
+        }
+
+        fetch(`${API_URL}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, phone, password, role })
+        })
+            .then(res => res.json())
+            .then(data => {
+                msgBox.style.color = 'var(--secondary-color, #28a745)';
+                msgBox.innerText = `✅ Registration successful for ${data.name}! You can now login.`;
+                document.getElementById('regName').value = '';
+                document.getElementById('regPhone').value = '';
+                document.getElementById('regPassword').value = '';
+            })
+            .catch(err => {
+                msgBox.style.color = 'red';
+                msgBox.innerText = 'Error registering user.';
+            });
+    }
+</script>
+</body>
+</html>

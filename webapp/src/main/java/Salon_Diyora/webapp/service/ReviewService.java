@@ -1,6 +1,8 @@
 package Salon_Diyora.webapp.service;
 
+import Salon_Diyora.webapp.model.Appointment;
 import Salon_Diyora.webapp.model.Review;
+import Salon_Diyora.webapp.repository.AppointmentRepository;
 import Salon_Diyora.webapp.repository.ReviewRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,13 +14,26 @@ import java.util.List;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Autowired
-    public ReviewService(ReviewRepository reviewRepository) {
+    public ReviewService(ReviewRepository reviewRepository, AppointmentRepository appointmentRepository) {
         this.reviewRepository = reviewRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
-    public Review saveReview(Review review) {
+    public Review submitReview(Review review) {
+        Appointment app = appointmentRepository.findById(review.getAppointmentId())
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+
+        if (!"COMPLETED".equalsIgnoreCase(app.getStatus())) {
+            throw new IllegalStateException("Reviews can only be submitted for completed appointments.");
+        }
+
+        if (reviewRepository.existsByAppointmentId(review.getAppointmentId())) {
+            throw new IllegalStateException("A review has already been submitted for this appointment.");
+        }
+
         if (review.getCreatedAt() == null) {
             review.setCreatedAt(LocalDateTime.now());
         }
@@ -31,13 +46,9 @@ public class ReviewService {
 
     public double calculateAverageRating() {
         List<Review> reviews = reviewRepository.findAll();
-        if (reviews.isEmpty()) {
-            return 0.0;
-        }
+        if (reviews.isEmpty()) return 0.0;
         double sum = 0;
-        for (Review r : reviews) {
-            sum += r.getRating();
-        }
+        for (Review r : reviews) sum += r.getRating();
         return Math.round((sum / reviews.size()) * 10.0) / 10.0;
     }
 }

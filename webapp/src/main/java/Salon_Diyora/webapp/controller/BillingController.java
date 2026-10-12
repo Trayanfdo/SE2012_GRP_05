@@ -4,12 +4,13 @@ import Salon_Diyora.webapp.model.Bill;
 import Salon_Diyora.webapp.model.SalonServiceItem;
 import Salon_Diyora.webapp.service.BillingService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/billing")
+@RequestMapping("/api/services")
 @CrossOrigin(origins = "*")
 public class BillingController {
 
@@ -20,23 +21,29 @@ public class BillingController {
         this.billingService = billingService;
     }
 
-    @GetMapping("/services")
-    public List<SalonServiceItem> getCatalog() {
+    // Accessible by all users (Customers, Staff, Owner)
+    @GetMapping
+    public List<SalonServiceItem> getAllServices() {
         return billingService.getAllServices();
     }
 
-    @PostMapping("/services")
-    public SalonServiceItem createService(@RequestBody SalonServiceItem item) {
-        return billingService.addService(item);
+    // Create new service
+    @PostMapping
+    public SalonServiceItem addService(@RequestBody SalonServiceItem newService) {
+        return billingService.addService(newService);
     }
 
-    @GetMapping("/bills")
-    public List<Bill> getBills() {
-        return billingService.getAllBills();
+    // Update existing service by ID
+    @PutMapping("/{id}")
+    public ResponseEntity<SalonServiceItem> updateService(@PathVariable Long id, @RequestBody SalonServiceItem service) {
+        SalonServiceItem updated = billingService.updateService(id, service);
+        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
     }
 
-    @PostMapping("/bills")
-    public Bill createBill(@RequestBody Bill bill) {
-        return billingService.generateBill(bill);
+    // Delete service by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> deleteService(@PathVariable Long id) {
+        boolean deleted = billingService.deleteService(id);
+        return deleted ? ResponseEntity.ok("Service deleted successfully.") : ResponseEntity.notFound().build();
     }
 }

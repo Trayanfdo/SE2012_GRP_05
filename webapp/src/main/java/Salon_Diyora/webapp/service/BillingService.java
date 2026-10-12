@@ -22,12 +22,29 @@ public class BillingService {
         this.billRepository = billRepository;
     }
 
+    public List<SalonServiceItem> getAllServices() {
+        return serviceItemRepository.findAll();
+    }
+
     public SalonServiceItem addService(SalonServiceItem serviceItem) {
         return serviceItemRepository.save(serviceItem);
     }
 
-    public List<SalonServiceItem> getAllServices() {
-        return serviceItemRepository.findAll();
+    public SalonServiceItem updateService(Long id, SalonServiceItem updatedService) {
+        return serviceItemRepository.findById(id).map(existing -> {
+            existing.setServiceName(updatedService.getServiceName());
+            existing.setPrice(updatedService.getPrice());
+            existing.setDurationMinutes(updatedService.getDurationMinutes());
+            return serviceItemRepository.save(existing);
+        }).orElse(null);
+    }
+
+    public boolean deleteService(Long id) {
+        if (serviceItemRepository.existsById(id)) {
+            serviceItemRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 
     public Bill generateBill(Bill bill) {

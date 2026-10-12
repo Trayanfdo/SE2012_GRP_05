@@ -13,7 +13,7 @@ public class AppUser {
     private String name;
 
     @Column(unique = true)
-    private String phone; // Used as the login username since customers call in
+    private String phone;
 
     private String password;
     private String role; // "CUSTOMER", "STYLIST", "RECEPTIONIST", "OWNER"
@@ -27,7 +27,6 @@ public class AppUser {
         this.role = role;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

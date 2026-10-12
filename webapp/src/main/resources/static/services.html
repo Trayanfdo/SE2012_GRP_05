@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Our Services</title>
+    <!-- FontAwesome Library CDN for SVG Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .service-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 22px;
+            margin-top: 25px;
+        }
+
+        .service-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            text-align: center;
+        }
+
+        .service-card:hover {
+            transform: translateY(-50%);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 22px rgba(89, 54, 162, 0.15);
+            border-color: var(--primary-color, #5936a2);
+        }
+
+        /* Icon Badge Header */
+        .icon-box {
+            width: 70px;
+            height: 70px;
+            background: rgba(89, 54, 162, 0.1);
+            color: var(--primary-color, #5936a2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .service-card:hover .icon-box {
+            background: var(--primary-color, #5936a2);
+            color: #ffffff;
+        }
+
+        .service-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333333;
+            margin-bottom: 8px;
+        }
+
+        .service-details {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .service-duration {
+            font-size: 0.85rem;
+            color: #666;
+            background: #f8f9fa;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-weight: 500;
+        }
+
+        .service-price {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--secondary-color, #28a745);
+        }
+
+        .btn-book-now {
+            margin-top: 15px;
+            width: 100%;
+            padding: 10px;
+            background-color: var(--primary-color, #5936a2);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-book-now:hover {
+            background-color: #452980;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Salon Diyora</h1>
+    <p>Service Catalogue & Pricing Menu</p>
+    <nav class="nav-bar">
+        <a href="index.html">Appointments</a>
+        <a href="services.html" class="active">Our Services</a>
+        <a href="login.html">Login / Register</a>
+        <a href="users.html">Accounts & Staff</a>
+        <a href="billing.html">Billing</a>
+        <a href="reviews.html">Reviews</a>
+    </nav>
+</div>
+
+<div class="container" style="flex-direction: column;">
+    <div class="module-card">
+        <h2>Available Services</h2>
+        <p style="color: #666; margin-bottom: 10px;">Select from our wide selection of hair, grooming, and facial treatments.</p>
+
+        <div id="serviceGridContainer" class="service-grid">
+            <p style="text-align: center; color: #888; grid-column: 1 / -1;">Loading available services...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_SERVICES_URL = 'http://localhost:8081/api/services';
+
+    // Function to assign relevant FontAwesome icon based on service title
+    function getServiceIcon(serviceName) {
+        const name = serviceName.toLowerCase();
+        if (name.includes('color')) return 'fa-solid fa-paint-brush';
+        if (name.includes('beard') && name.includes('styling')) return 'fa-solid fa-user-tie';
+        if (name.includes('beard')) return 'fa-solid fa-scissors';
+        if (name.includes('haircut') || name.includes('hair')) return 'fa-solid fa-scissors';
+        if (name.includes('massage')) return 'fa-solid fa-spa';
+        if (name.includes('facial') || name.includes('cleanup') || name.includes('face')) return 'fa-solid fa-sparkles';
+        if (name.includes('shave')) return 'fa-solid fa-hand-holding-droplet';
+        return 'fa-solid fa-cut'; // Default fallback icon
+    }
+
+    function loadServicesWithIcons() {
+        fetch(API_SERVICES_URL)
+            .then(res => res.json())
+            .then(services => {
+                const container = document.getElementById('serviceGridContainer');
+                container.innerHTML = '';
+
+                if (!services || services.length === 0) {
+                    container.innerHTML = '<p style="color: red; grid-column: 1 / -1; text-align: center;">No services found.</p>';
+                    return;
+                }
+
+                services.forEach(item => {
+                    const iconClass = getServiceIcon(item.serviceName);
+
+                    container.innerHTML += `
+                            <div class="service-card">
+                                <div>
+                                    <div class="icon-box">
+                                        <i class="${iconClass}"></i>
+                                    </div>
+                                    <div class="service-title">${item.serviceName}</div>
+                                </div>
+                                <div style="width: 100%;">
+                                    <div class="service-details">
+                                        <span class="service-duration"><i class="fa-regular fa-clock"></i> ${item.durationMinutes} mins</span>
+                                        <span class="service-price">Rs. ${item.price.toLocaleString()}</span>
+                                    </div>
+                                    <button class="btn-book-now" onclick="goToBooking()">Book Service</button>
+                                </div>
+                            </div>
+                        `;
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching services:', err);
+                document.getElementById('serviceGridContainer').innerHTML =
+                    '<p style="color: red; grid-column: 1 / -1; text-align: center;">Unable to connect to server. Ensure Spring Boot is running.</p>';
+            });
+    }
+
+    function goToBooking() {
+        const user = sessionStorage.getItem('currentUser');
+        if (user) {
+            window.location.href = 'customer-dashboard.html';
+        } else {
+            window.location.href = 'login.html';
+        }
+    }
+
+    window.onload = loadServicesWithIcons;
+</script>
+</body>
+</html>

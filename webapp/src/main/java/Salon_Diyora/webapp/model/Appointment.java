@@ -1,89 +1,47 @@
 package Salon_Diyora.webapp.model;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "Appointment")
+@Table(name = "appointments")
 public class Appointment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AppointmentID")
-    private Integer appointmentId;
+    private Long id;
 
-    @Column(name = "CustomerID")
-    private Integer customerId;
+    private Long customerId;
+    private Long stylistId;
+    private Long serviceId;
+    private LocalDateTime appointmentTime;
+    private String status; // "CONFIRMED", "COMPLETED", "CANCELLED"
 
-    @Column(name = "StaffID")
-    private Integer staffId;
+    public Appointment() {}
 
-    @Column(name = "AppointmentDate")
-    private LocalDate appointmentDate;
-
-    @Column(name = "StartTime")
-    private LocalTime startTime;
-
-    @Column(name = "EndTime")
-    private LocalTime endTime;
-
-    @Column(name = "status")
-    private String status;
-
-    public Integer getAppointmentId() {
-        return appointmentId;
-    }
-
-    public void setAppointmentId(Integer appointmentId) {
-        this.appointmentId = appointmentId;
-    }
-
-    public Integer getCustomerId() {
-        return customerId;
-    }
-
-    public void setCustomerId(Integer customerId) {
+    public Appointment(Long customerId, Long stylistId, Long serviceId, LocalDateTime appointmentTime, String status) {
         this.customerId = customerId;
-    }
-
-    public Integer getStaffId() {
-        return staffId;
-    }
-
-    public void setStaffId(Integer staffId) {
-        this.staffId = staffId;
-    }
-
-    public LocalDate getAppointmentDate() {
-        return appointmentDate;
-    }
-
-    public void setAppointmentDate(LocalDate appointmentDate) {
-        this.appointmentDate = appointmentDate;
-    }
-
-    public LocalTime getStartTime() {
-        return startTime;
-    }
-
-    public void setStartTime(LocalTime startTime) {
-        this.startTime = startTime;
-    }
-
-    public LocalTime getEndTime() {
-        return endTime;
-    }
-
-    public void setEndTime(LocalTime endTime) {
-        this.endTime = endTime;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
+        this.stylistId = stylistId;
+        this.serviceId = serviceId;
+        this.appointmentTime = appointmentTime;
         this.status = status;
     }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
+
+    public Long getStylistId() { return stylistId; }
+    public void setStylistId(Long stylistId) { this.stylistId = stylistId; }
+
+    public Long getServiceId() { return serviceId; }
+    public void setServiceId(Long serviceId) { this.serviceId = serviceId; }
+
+    public LocalDateTime getAppointmentTime() { return appointmentTime; }
+    public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 }

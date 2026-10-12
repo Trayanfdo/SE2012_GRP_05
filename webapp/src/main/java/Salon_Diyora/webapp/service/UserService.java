@@ -19,7 +19,6 @@ public class UserService {
     }
 
     public AppUser registerUser(AppUser user) {
-        // Default new registrations to CUSTOMER if not specified
         if (user.getRole() == null || user.getRole().isEmpty()) {
             user.setRole("CUSTOMER");
         }
@@ -28,11 +27,31 @@ public class UserService {
 
     public AppUser loginUser(String phone, String password) {
         Optional<AppUser> user = userRepository.findByPhoneAndPassword(phone, password);
-        return user.orElse(null); // Returns null if login fails
+        return user.orElse(null);
     }
 
     public List<AppUser> getStaffProfiles() {
+        return userRepository.findByRoleIn(List.of("STYLIST", "RECEPTIONIST"));
+    }
 
-        return userRepository.findByRole("STYLIST");
+    public List<AppUser> getStylistsOnly() {
+        return userRepository.findByRoleIn(List.of("STYLIST"));
+    }
+
+    public AppUser updateUser(Long id, AppUser updated) {
+        return userRepository.findById(id).map(user -> {
+            user.setName(updated.getName());
+            user.setPhone(updated.getPhone());
+            user.setRole(updated.getRole());
+            return userRepository.save(user);
+        }).orElse(null);
+    }
+
+    public boolean deleteUser(Long id) {
+        if (userRepository.existsById(id)) {
+            userRepository.deleteById(id);
+            return true;
+        }
+        return false;
     }
 }

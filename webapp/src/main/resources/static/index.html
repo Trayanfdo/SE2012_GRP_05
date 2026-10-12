@@ -103,6 +103,103 @@
             })
             .catch(error => console.error('Error booking:', error));
     }
+    // Function to show a styled custom alert box instead of default browser alert
+    function showSalonAlert(message, title = "Salon Diyora") {
+        // Check if custom alert elements already exist, create if not
+        let overlay = document.getElementById('customAlertOverlay');
+        let alertBox = document.getElementById('customAlertBox');
+
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'customAlertOverlay';
+            document.body.appendChild(overlay);
+
+            alertBox = document.createElement('div');
+            alertBox.id = 'customAlertBox';
+            alertBox.innerHTML = `
+            <h3 id="customAlertTitle"></h3>
+            <p id="customAlertMessage"></p>
+            <button id="customAlertBtn" onclick="closeSalonAlert()">OK</button>
+        `;
+            document.body.appendChild(alertBox);
+        }
+
+        document.getElementById('customAlertTitle').innerText = title;
+        document.getElementById('customAlertMessage').innerText = message;
+
+        overlay.style.display = 'block';
+        alertBox.style.display = 'block';
+    }
+
+    function closeSalonAlert() {
+        const overlay = document.getElementById('customAlertOverlay');
+        const alertBox = document.getElementById('customAlertBox');
+        if (overlay) overlay.style.display = 'none';
+        if (alertBox) alertBox.style.display = 'none';
+    }
+    // JavaScript function to dynamically assign FontAwesome icons based on service title
+    function getServiceIcon(serviceName) {
+        if (!serviceName) return 'fa-solid fa-cut'; // Default fallback icon
+
+        const name = serviceName.toLowerCase();
+
+        // Check keywords in the service name
+        if (name.includes('color') || name.includes('highlight') || name.includes('tint')) {
+            return 'fa-solid fa-paint-brush'; // Painting / Coloring icon
+        }
+        if (name.includes('beard') && name.includes('styling')) {
+            return 'fa-solid fa-user-tie'; // Styling icon
+        }
+        if (name.includes('beard') || name.includes('trim')) {
+            return 'fa-solid fa-scissors'; // Scissors icon
+        }
+        if (name.includes('haircut') || name.includes('hair') || name.includes('cut')) {
+            return 'fa-solid fa-scissors'; // Haircut icon
+        }
+        if (name.includes('massage') || name.includes('spa')) {
+            return 'fa-solid fa-spa'; // Spa & Massage icon
+        }
+        if (name.includes('facial') || name.includes('cleanup') || name.includes('skin') || name.includes('face')) {
+            return 'fa-solid fa-sparkles'; // Skin & Facial icon
+        }
+        if (name.includes('shave')) {
+            return 'fa-solid fa-hand-holding-droplet'; // Shaving icon
+        }
+        if (name.includes('nail') || name.includes('manicure') || name.includes('pedicure')) {
+            return 'fa-solid fa-hand-sparkles'; // Nails icon
+        }
+
+        // Default icon if no keywords match
+        return 'fa-solid fa-cut';
+    }
+    function loadServicesWithIcons() {
+        fetch('http://localhost:8081/api/services')
+            .then(res => res.json())
+            .then(services => {
+                const container = document.getElementById('serviceGridContainer');
+                container.innerHTML = '';
+
+                services.forEach(item => {
+                    // Get the FontAwesome class string dynamically
+                    const iconClass = getServiceIcon(item.serviceName);
+
+                    // Inject into HTML card structure
+                    container.innerHTML += `
+                    <div class="service-card">
+                        <div class="icon-box">
+                            <i class="${iconClass}"></i>
+                        </div>
+                        <div class="service-title">${item.serviceName}</div>
+                        <div class="service-details">
+                            <span><i class="fa-regular fa-clock"></i> ${item.durationMinutes} mins</span>
+                            <span class="service-price">Rs. ${item.price.toLocaleString()}</span>
+                        </div>
+                    </div>
+                `;
+                });
+            })
+            .catch(err => console.error('Error fetching services:', err));
+    }
 </script>
 </body>
 </html>

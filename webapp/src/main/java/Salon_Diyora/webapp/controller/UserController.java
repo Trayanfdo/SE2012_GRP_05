@@ -3,6 +3,8 @@ package Salon_Diyora.webapp.controller;
 import Salon_Diyora.webapp.model.AppUser;
 import Salon_Diyora.webapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,17 +27,28 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestBody AppUser credentials) {
+    public ResponseEntity<?> login(@RequestBody AppUser credentials) {
         AppUser loggedInUser = userService.loginUser(credentials.getPhone(), credentials.getPassword());
         if (loggedInUser != null) {
-            return "Login Successful. Welcome " + loggedInUser.getName() + " (" + loggedInUser.getRole() + ")";
+            return ResponseEntity.ok(loggedInUser);
         } else {
-            return "Invalid phone number or password.";
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password.");
         }
     }
 
     @GetMapping("/staff")
     public List<AppUser> getStaff() {
         return userService.getStaffProfiles();
+    }
+
+    @PutMapping("/{id}")
+    public AppUser updateUser(@PathVariable Long id, @RequestBody AppUser user) {
+        return userService.updateUser(id, user);
+    }
+
+    @DeleteMapping("/{id}")
+    public String deleteUser(@PathVariable Long id) {
+        boolean deleted = userService.deleteUser(id);
+        return deleted ? "User deleted successfully." : "User not found.";
     }
 }

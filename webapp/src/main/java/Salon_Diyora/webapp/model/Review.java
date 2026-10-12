@@ -12,8 +12,9 @@ public class Review {
     private Long id;
 
     private Long appointmentId;
+    private Long customerId;
     private String customerName;
-    private int rating; // 1 to 5 Stars
+    private int rating;
 
     @Column(length = 1000)
     private String comments;
@@ -24,20 +25,23 @@ public class Review {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Review(Long appointmentId, String customerName, int rating, String comments) {
+    public Review(Long appointmentId, Long customerId, String customerName, int rating, String comments) {
         this.appointmentId = appointmentId;
+        this.customerId = customerId;
         this.customerName = customerName;
         this.rating = rating;
         this.comments = comments;
         this.createdAt = LocalDateTime.now();
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
     public Long getAppointmentId() { return appointmentId; }
     public void setAppointmentId(Long appointmentId) { this.appointmentId = appointmentId; }
+
+    public Long getCustomerId() { return customerId; }
+    public void setCustomerId(Long customerId) { this.customerId = customerId; }
 
     public String getCustomerName() { return customerName; }
     public void setCustomerName(String customerName) { this.customerName = customerName; }

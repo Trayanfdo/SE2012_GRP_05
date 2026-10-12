@@ -104,11 +104,141 @@ input[type="datetime-local"] {
     transition: border-color 0.3s ease;
 }
 
+/* Style all form text inputs, password inputs, and select dropdowns */
+/* Guarantees all form input boxes render with identical inner padding & height */
+input[type="text"],
+input[type="number"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box; /* Ensures inner padding does not distort box dimensions */
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Subtle focus effect when clicking inside an input box */
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: #5936a2; /* Primary purple color */
+    box-shadow: 0 0 0 3px rgba(89, 54, 162, 0.15);
+}
+
+/* ==========================================
+   PASSWORD FIELD WITH SHOW/HIDE EYE ICON
+   ========================================== */
+/* Container wrapping both the input and eye icon */
+.password-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 15px; /* Handles vertical spacing between form elements */
+}
+
+/* Password Input styling inside the container */
+.password-container input[type="password"],
+.password-container input[type="text"] {
+    width: 100%;
+    padding: 12px 45px 12px 15px; /* 45px right padding keeps text inside the box without touching the icon */
+    margin-bottom: 0 !important;   /* Spacing is handled by the wrapper container */
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;       /* Ensures padding stays inside the input box */
+}
+
+/* Eye Icon positioned inside the right side of the input box */
+.toggle-password {
+    position: absolute;
+    right: 15px;                  /* Distances the icon from the right inside border */
+    top: 50%;                     /* Centers the icon vertically */
+    transform: translateY(-50%);
+    cursor: pointer;
+    user-select: none;
+    font-size: 1rem;
+    color: #666;
+    z-index: 2;                   /* Places icon above input field */
+    transition: color 0.2s ease;
+}
+
+.toggle-password:hover {
+    color: var(--primary-color, #5936a2);
+}
+
 input:focus {
     outline: none;
     border-color: var(--primary-color);
 }
+/* Custom Salon Diyora Alert Popup Box */
+#customAlertOverlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 2000;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease-in-out;
+}
 
+#customAlertBox {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffffff;
+    padding: 25px 30px;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 2001;
+    text-align: center;
+    width: 320px;
+    border-top: 5px solid var(--primary-color, #5936a2);
+    animation: slideDown 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#customAlertBox h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--primary-color, #5936a2);
+    font-size: 1.2rem;
+}
+
+#customAlertMessage {
+    color: #444;
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+}
+
+#customAlertBtn {
+    background-color: var(--primary-color, #5936a2);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+#customAlertBtn:hover {
+    background-color: #452980;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { transform: translate(-50%, -60%); opacity: 0; }
+    to { transform: translate(-50%, -50%); opacity: 1; }
+}
 /* Buttons */
 button {
     width: 100%;

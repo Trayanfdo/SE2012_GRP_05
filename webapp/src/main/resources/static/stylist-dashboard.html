@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Stylist Schedule</title>
+    <!-- FontAwesome icons for professional UI -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .schedule-card {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary-color, #5936a2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .schedule-card.completed {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .schedule-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-confirmed { background: #e3f2fd; color: #0d6efd; }
+        .status-completed { background: #d1e7dd; color: #0f5132; }
+
+        .btn-action-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-complete {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-complete:hover { background-color: #218838; }
+
+        .btn-cancel-app {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .btn-cancel-app:hover { background-color: #bb2d3b; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Salon Diyora - Stylist Dashboard</h1>
+    <p id="welcomeMsg">Welcome, Stylist</p>
+    <button onclick="logout()" style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+</div>
+
+<div class="container" style="flex-direction: column;">
+    <div class="module-card">
+        <h2><i class="fa-solid fa-calendar-check"></i> My Upcoming Appointments</h2>
+        <button onclick="loadMySchedule()" style="width: auto; margin-bottom: 20px;"><i class="fa-solid fa-rotate"></i> Refresh Schedule</button>
+
+        <div id="scheduleContainer">
+            <p style="text-align: center; color: #888;">Loading your appointments...</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
+
+    // Retrieve logged-in user session
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    if (!currentUser || (currentUser.role.toUpperCase() !== 'STYLIST' && currentUser.role.toUpperCase() !== 'STAFF')) {
+        alert('Access Denied: Stylist login required.');
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Stylist)`;
+    }
+
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // Fetch upcoming work assigned to this stylist
+    function loadMySchedule() {
+        fetch(`${API_APPOINTMENTS}/stylist/${currentUser.id}`)
+            .then(res => res.json())
+            .then(appointments => {
+                const container = document.getElementById('scheduleContainer');
+                container.innerHTML = '';
+
+                if (!appointments || appointments.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #888;">No upcoming appointments assigned to you.</p>';
+                    return;
+                }
+
+                appointments.forEach(app => {
+                    const dateObj = new Date(app.appointmentTime);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+                    const formattedTime = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+                    const isDone = app.status === 'COMPLETED';
+
+                    container.innerHTML += `
+                            <div class="schedule-card ${isDone ? 'completed' : ''}">
+                                <div class="schedule-info">
+                                    <strong><i class="fa-regular fa-clock"></i> ${formattedDate} at ${formattedTime}</strong>
+                                    <span>Customer ID: ${app.customerId}</span>
+                                    <span>
+                                        Status:
+                                        <span class="status-badge ${isDone ? 'status-completed' : 'status-confirmed'}">
+                                            ${app.status}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div class="btn-action-group">
+                                    ${!isDone ? `
+                                        <button class="btn-complete" onclick="markStatus(${app.id}, 'COMPLETED')"><i class="fa-solid fa-check"></i> Mark Complete</button>
+                                        <button class="btn-cancel-app" onclick="markStatus(${app.id}, 'CANCELLED')"><i class="fa-solid fa-xmark"></i> Cancel</button>
+                                    ` : `
+                                        <span style="color: #28a745; font-weight: 600;"><i class="fa-solid fa-circle-check"></i> Finished</span>
+                                    `}
+                                </div>
+                            </div>
+                        `;
+                });
+            })
+            .catch(err => {
+                console.error('Error fetching schedule:', err);
+                document.getElementById('scheduleContainer').innerHTML = '<p style="color: red; text-align: center;">Error loading schedule from backend.</p>';
+            });
+    }
+
+    // Update appointment status to COMPLETED or CANCELLED
+    function markStatus(appointmentId, newStatus) {
+        if (confirm(`Are you sure you want to mark appointment #${appointmentId} as ${newStatus}?`)) {
+            fetch(`${API_APPOINTMENTS}/${appointmentId}/status?status=${newStatus}`, {
+                method: 'PUT'
+            })
+                .then(res => res.text())
+                .then(msg => {
+                    alert('✅ ' + msg);
+                    loadMySchedule();
+                })
+                .catch(err => console.error('Error updating status:', err));
+        }
+    }
+
+    window.onload = loadMySchedule;
+</script>
+</body>
+</html>
