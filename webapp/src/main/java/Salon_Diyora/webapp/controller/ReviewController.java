@@ -3,6 +3,7 @@ package Salon_Diyora.webapp.controller;
 import Salon_Diyora.webapp.model.Review;
 import Salon_Diyora.webapp.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,8 +21,13 @@ public class ReviewController {
     }
 
     @PostMapping
-    public Review submitReview(@RequestBody Review review) {
-        return reviewService.saveReview(review);
+    public ResponseEntity<?> submitReview(@RequestBody Review review) {
+        try {
+            Review saved = reviewService.submitReview(review);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping

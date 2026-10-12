@@ -3,7 +3,6 @@ package Salon_Diyora.webapp.controller;
 import Salon_Diyora.webapp.model.AppUser;
 import Salon_Diyora.webapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +31,7 @@ public class UserController {
         if (loggedInUser != null) {
             return ResponseEntity.ok(loggedInUser);
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password.");
+            return ResponseEntity.status(401).body("Invalid phone number or password.");
         }
     }
 
@@ -41,14 +40,20 @@ public class UserController {
         return userService.getStaffProfiles();
     }
 
+    @GetMapping("/stylists")
+    public List<AppUser> getStylistsOnly() {
+        return userService.getStylistsOnly();
+    }
+
     @PutMapping("/{id}")
-    public AppUser updateUser(@PathVariable Long id, @RequestBody AppUser user) {
-        return userService.updateUser(id, user);
+    public ResponseEntity<AppUser> updateUser(@PathVariable Long id, @RequestBody AppUser updated) {
+        AppUser res = userService.updateUser(id, updated);
+        return res != null ? ResponseEntity.ok(res) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
-    public String deleteUser(@PathVariable Long id) {
+    public ResponseEntity<String> deleteUser(@PathVariable Long id) {
         boolean deleted = userService.deleteUser(id);
-        return deleted ? "User deleted successfully." : "User not found.";
+        return deleted ? ResponseEntity.ok("User deleted successfully.") : ResponseEntity.notFound().build();
     }
 }

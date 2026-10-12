@@ -2,123 +2,71 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Diyora - Customer Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
     <style>
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            color: var(--primary-color, #5936a2);
-        }
-        .slot-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .slot-btn {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background: #f8f9fa;
-            color: #333;
-            cursor: pointer;
-            font-size: 0.85rem;
-            text-align: center;
-            transition: all 0.2s ease;
-        }
-        .slot-btn:hover {
-            border-color: var(--primary-color, #5936a2);
-        }
-        .slot-btn.selected {
-            background: var(--primary-color, #5936a2);
-            color: white;
-            border-color: var(--primary-color, #5936a2);
-        }
-        .slot-btn.disabled {
-            background: #e9ecef;
-            color: #adb5bd;
-            cursor: not-allowed;
-            text-decoration: line-through;
-        }
+        .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .slot-btn { padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; cursor: pointer; text-align: center; }
+        .slot-btn.selected { background: var(--primary-color); color: white; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <h1>Salon Diyora - Customer Portal</h1>
-    <p id="welcomeMsg">Welcome, Customer</p>
-    <button onclick="logout()" style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+    <p id="welcomeMsg">Welcome Customer</p>
+    <button onclick="logout()" style="width:auto; padding:6px 16px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer;">Logout</button>
 </div>
 
 <div class="container">
-
-    <!-- BOOK APPOINTMENT CARD -->
     <div class="module-card">
-        <h2>Book an Appointment</h2>
+        <h2>Book Appointment</h2>
 
-        <!-- 1. Select Service -->
-        <div class="form-group">
-            <label for="serviceSelect">Select Service:</label>
-            <select id="serviceSelect" onchange="updateServiceDetails()">
-                <option value="">-- Choose a Service --</option>
-            </select>
-            <small id="serviceInfo" style="color: #666;"></small>
+        <label>Select Service:</label>
+        <select id="serviceSelect" onchange="updateServiceDetails()">
+            <option value="">-- Select Service --</option>
+        </select>
+        <small id="serviceInfo" style="color:#666; display:block; margin-bottom:10px;"></small>
+
+        <label>Select Stylist:</label>
+        <select id="stylistSelect" onchange="generateTimeSlots()">
+            <option value="">-- Select Stylist --</option>
+        </select>
+
+        <label>Select Date:</label>
+        <input type="date" id="bookingDate" onchange="generateTimeSlots()">
+
+        <label>Available Slots:</label>
+        <div id="slotsContainer" class="slot-grid">
+            <small style="color:#888; grid-column:1/-1;">Select Stylist and Date first</small>
         </div>
 
-        <!-- 2. Select Stylist -->
-        <div class="form-group">
-            <label for="stylistSelect">Select Preferred Stylist:</label>
-            <select id="stylistSelect">
-                <option value="">-- Choose a Stylist --</option>
-            </select>
-        </div>
-
-        <!-- 3. Select Date -->
-        <div class="form-group">
-            <label for="bookingDate">Select Date:</label>
-            <input type="date" id="bookingDate" onchange="generateTimeSlots()" required>
-        </div>
-
-        <!-- 4. Select Time Slot -->
-        <div class="form-group">
-            <label>Available Time Slots:</label>
-            <div id="slotsContainer" class="slot-grid">
-                <small style="color: #888; grid-column: 1 / -1;">Please select a date first</small>
-            </div>
-        </div>
-
-        <button class="btn-book" onclick="confirmBooking()" style="margin-top: 15px;">Confirm & Book Appointment</button>
-        <div id="bookingMsg" style="margin-top: 15px; text-align: center; font-weight: 600;"></div>
+        <button class="btn-book" onclick="confirmBooking()" style="margin-top:20px;">Confirm Booking</button>
+        <div id="bookingMsg" style="margin-top:15px; text-align:center; font-weight:600;"></div>
     </div>
 
-    <!-- LEAVE FEEDBACK CARD -->
     <div class="module-card">
-        <h2>Leave Feedback</h2>
-        <div class="form-group">
-            <label for="rating">Rating:</label>
-            <select id="rating">
-                <option value="5">⭐⭐⭐⭐⭐ 5 Stars - Excellent</option>
-                <option value="4">⭐⭐⭐⭐ 4 Stars - Very Good</option>
-                <option value="3">⭐⭐⭐ 3 Stars - Average</option>
-                <option value="2">⭐⭐ 2 Stars - Poor</option>
-                <option value="1">⭐ 1 Star - Very Bad</option>
-            </select>
-        </div>
+        <h2>Submit Feedback for Completed Appointments</h2>
+        <label>Completed Service:</label>
+        <select id="completedAppSelect">
+            <option value="">-- Select Completed Appointment --</option>
+        </select>
 
-        <div class="form-group">
-            <label for="comments">Comments:</label>
-            <textarea id="comments" placeholder="Share your experience..." rows="4" style="width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;"></textarea>
-        </div>
+        <label>Rating:</label>
+        <select id="rating">
+            <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
+            <option value="4">⭐⭐⭐⭐ 4 Stars</option>
+            <option value="3">⭐⭐⭐ 3 Stars</option>
+            <option value="2">⭐⭐ 2 Stars</option>
+            <option value="1">⭐ 1 Star</option>
+        </select>
 
-        <button onclick="submitFeedback()" style="background-color: var(--primary-color, #5936a2);">Submit Feedback</button>
+        <label>Comments:</label>
+        <textarea id="comments" rows="3" placeholder="How was your service?"></textarea>
+
+        <button onclick="submitReview()">Submit Review</button>
     </div>
-
 </div>
 
 <script>
@@ -127,123 +75,97 @@
     const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
     const API_REVIEWS = 'http://localhost:8081/api/reviews';
 
-    let selectedTimeSlot = '';
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    let selectedSlot = '';
     let servicesData = [];
 
-    // Check authentication session
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-    if (!currentUser) {
-        alert('Please login first.');
-        window.location.href = 'login.html';
-    } else {
-        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name}`;
-    }
+    if (!currentUser) window.location.href = 'login.html';
+    else document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name}`;
 
-    function logout() {
-        sessionStorage.clear();
-        window.location.href = 'login.html';
-    }
+    function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
 
-    // 1. Fetch available services from backend
-    function loadServicesDropdown() {
-        fetch(API_SERVICES)
-            .then(res => res.json())
-            .then(data => {
-                servicesData = data;
-                const select = document.getElementById('serviceSelect');
-                select.innerHTML = '<option value="">-- Choose a Service --</option>';
-                data.forEach(s => {
-                    select.innerHTML += `<option value="${s.id}">${s.serviceName} - Rs. ${s.price.toLocaleString()}</option>`;
-                });
-            })
-            .catch(err => console.error('Error loading services:', err));
-    }
-
-    // Show selected service duration/price info
-    function updateServiceDetails() {
-        const serviceId = document.getElementById('serviceSelect').value;
-        const infoBox = document.getElementById('serviceInfo');
-        const found = servicesData.find(s => s.id == serviceId);
-        if (found) {
-            infoBox.innerText = `⏱ Estimated Duration: ${found.durationMinutes} minutes | Price: Rs. ${found.price}`;
-        } else {
-            infoBox.innerText = '';
-        }
-    }
-
-    // 2. Fetch available stylists from backend
-    // Fetch available staff and filter ONLY for Stylists (excludes Receptionists)
-    function loadStylistsDropdown() {
-        fetch(`${API_USERS}/staff`)
-            .then(res => res.json())
-            .then(data => {
-                const select = document.getElementById('stylistSelect');
-                select.innerHTML = '<option value="">-- Choose a Stylist --</option>';
-
-                // Filter out RECEPTIONIST or OWNER roles
-                const stylistsOnly = data.filter(staff => {
-                    const role = staff.role ? staff.role.toUpperCase() : '';
-                    return role === 'STYLIST' || role === 'STYLIST (STAFF)';
-                });
-
-                if (stylistsOnly.length === 0) {
-                    select.innerHTML += '<option value="" disabled>No stylists currently available</option>';
-                    return;
-                }
-
-                stylistsOnly.forEach(s => {
-                    select.innerHTML += `<option value="${s.id}">${s.name}</option>`;
-                });
-            })
-            .catch(err => console.error('Error loading stylists:', err));
-    }
-
-    // 3. Generate Time Slots between 09:00 AM and 05:00 PM
-    function generateTimeSlots() {
-        const container = document.getElementById('slotsContainer');
-        container.innerHTML = '';
-        selectedTimeSlot = '';
-
-        const availableTimes = [
-            '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-            '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
-        ];
-
-        availableTimes.forEach(time => {
-            const btn = document.createElement('div');
-            btn.className = 'slot-btn';
-            btn.innerText = time;
-            btn.onclick = () => selectSlot(btn, time);
-            container.appendChild(btn);
+    function loadServices() {
+        fetch(API_SERVICES).then(res => res.json()).then(data => {
+            servicesData = data;
+            const select = document.getElementById('serviceSelect');
+            select.innerHTML = '<option value="">-- Select Service --</option>';
+            data.forEach(s => select.innerHTML += `<option value="${s.id}">${s.serviceName} - Rs. ${s.price}</option>`);
         });
     }
 
-    function selectSlot(element, time) {
-        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-        element.classList.add('selected');
-        selectedTimeSlot = time;
+    function updateServiceDetails() {
+        const id = document.getElementById('serviceSelect').value;
+        const found = servicesData.find(s => s.id == id);
+        document.getElementById('serviceInfo').innerText = found ? `Duration: ${found.durationMinutes} mins | Price: Rs. ${found.price}` : '';
     }
 
-    // 4. Submit appointment booking to database
+    function loadStylists() {
+        fetch(`${API_USERS}/stylists`).then(res => res.json()).then(data => {
+            const select = document.getElementById('stylistSelect');
+            select.innerHTML = '<option value="">-- Select Stylist --</option>';
+            data.forEach(s => select.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+        });
+    }
+
+    function generateTimeSlots() {
+        const stylistId = document.getElementById('stylistSelect').value;
+        const date = document.getElementById('bookingDate').value;
+        const container = document.getElementById('slotsContainer');
+
+        if (!stylistId || !date) return;
+
+        const times = ['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
+
+        fetch(`${API_APPOINTMENTS}/stylist/${stylistId}`).then(res => res.json()).then(booked => {
+            container.innerHTML = '';
+            const bookedTimes = booked.map(b => b.appointmentTime);
+
+            times.forEach(t => {
+                const slotISO = `${date}T${convert24(t)}:00`;
+                const isBooked = bookedTimes.includes(slotISO);
+
+                const btn = document.createElement('div');
+                btn.className = `slot-btn ${isBooked ? 'disabled' : ''}`;
+                btn.innerText = isBooked ? `${t} (Booked)` : t;
+                if (isBooked) {
+                    btn.style.background = '#e9ecef';
+                    btn.style.color = '#dc3545';
+                    btn.style.cursor = 'not-allowed';
+                } else {
+                    btn.onclick = () => {
+                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                        btn.classList.add('selected');
+                        selectedSlot = t;
+                    };
+                }
+                container.appendChild(btn);
+            });
+        });
+    }
+
+    function convert24(t) {
+        let [time, modifier] = t.split(' ');
+        let [hrs, mins] = time.split(':');
+        if (hrs === '12') hrs = '00';
+        if (modifier === 'PM') hrs = parseInt(hrs, 10) + 12;
+        return `${hrs}:${mins}`;
+    }
+
     function confirmBooking() {
         const serviceId = document.getElementById('serviceSelect').value;
         const stylistId = document.getElementById('stylistSelect').value;
         const date = document.getElementById('bookingDate').value;
-        const msgBox = document.getElementById('bookingMsg');
 
-        if (!serviceId || !stylistId || !date || !selectedTimeSlot) {
-            msgBox.style.color = 'red';
-            msgBox.innerText = 'Please complete all fields (Service, Stylist, Date & Time Slot).';
+        if (!serviceId || !stylistId || !date || !selectedSlot) {
+            alert('Fill out all fields');
             return;
         }
-
-        // Convert date and slot into LocalDateTime ISO string format
-        const formattedDateTime = `${date}T${convertTo24Hour(selectedTimeSlot)}:00`;
 
         const payload = {
             customerId: currentUser.id,
             stylistId: parseInt(stylistId),
-            appointmentTime: formattedDateTime,
+            serviceId: parseInt(serviceId),
+            appointmentTime: `${date}T${convert24(selectedSlot)}:00`,
             status: 'CONFIRMED'
         };
 
@@ -253,90 +175,28 @@
             body: JSON.stringify(payload)
         })
             .then(res => res.json())
-            .then(data => {
-                msgBox.style.color = 'var(--secondary-color, #28a745)';
-                msgBox.innerText = `✅ Appointment confirmed for ${date} at ${selectedTimeSlot}!`;
-                // Reset slot selection
-                selectedTimeSlot = '';
-                document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-            })
-            .catch(err => {
-                console.error('Booking error:', err);
-                msgBox.style.color = 'red';
-                msgBox.innerText = 'Failed to book appointment.';
-            });
-    }
-    function generateTimeSlots() {
-        const stylistId = document.getElementById('stylistSelect').value;
-        const selectedDate = document.getElementById('bookingDate').value;
-        const container = document.getElementById('slotsContainer');
-
-        if (!stylistId || !selectedDate) {
-            container.innerHTML = '<small style="color: #888; grid-column: 1 / -1;">Please select both a Stylist and a Date first.</small>';
-            return;
-        }
-
-        container.innerHTML = '<small style="color: #888; grid-column: 1 / -1;">Checking slot availability...</small>';
-        selectedTimeSlot = '';
-
-        const availableTimes = [
-            '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-            '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'
-        ];
-
-        // Fetch booked appointments for the selected stylist from backend
-        fetch(`${API_APPOINTMENTS}/stylist/${stylistId}`)
-            .then(res => res.json())
-            .then(bookedAppointments => {
-                container.innerHTML = '';
-
-                // Extract array of booked ISO time strings (YYYY-MM-DDTHH:MM)
-                const bookedTimes = bookedAppointments.map(app => app.appointmentTime);
-
-                availableTimes.forEach(timeStr => {
-                    const slotDateTime = `${selectedDate}T${convertTo24Hour(timeStr)}:00`;
-                    const isBooked = bookedTimes.includes(slotDateTime);
-
-                    const btn = document.createElement('div');
-
-                    if (isBooked) {
-                        btn.className = 'slot-btn disabled';
-                        btn.innerText = `${timeStr} (Booked)`;
-                        btn.style.backgroundColor = '#e9ecef';
-                        btn.style.color = '#dc3545';
-                        btn.style.cursor = 'not-allowed';
-                        btn.style.textDecoration = 'line-through';
-                    } else {
-                        btn.className = 'slot-btn';
-                        btn.innerText = timeStr;
-                        btn.onclick = () => selectSlot(btn, timeStr);
-                    }
-
-                    container.appendChild(btn);
-                });
-            })
-            .catch(err => {
-                console.error('Error fetching slot availability:', err);
-                container.innerHTML = '<small style="color: red; grid-column: 1 / -1;">Failed to load time slots.</small>';
+            .then(() => {
+                document.getElementById('bookingMsg').innerText = '✅ Appointment Confirmed!';
+                generateTimeSlots();
+                loadCompletedAppointments();
             });
     }
 
-    // Re-generate time slots whenever Stylist or Date is changed
-    document.getElementById('stylistSelect').addEventListener('change', generateTimeSlots);
-    document.getElementById('bookingDate').addEventListener('change', generateTimeSlots);
-
-    // Helper function to convert 12-hour AM/PM to 24-hour time for Java LocalDateTime
-    function convertTo24Hour(timeStr) {
-        const [time, modifier] = timeStr.split(' ');
-        let [hours, minutes] = time.split(':');
-        if (hours === '12') hours = '00';
-        if (modifier === 'PM') hours = parseInt(hours, 10) + 12;
-        return `${hours}:${minutes}`;
+    function loadCompletedAppointments() {
+        fetch(`${API_APPOINTMENTS}/customer/${currentUser.id}/completed`).then(res => res.json()).then(data => {
+            const select = document.getElementById('completedAppSelect');
+            select.innerHTML = '<option value="">-- Select Completed Appointment --</option>';
+            data.forEach(a => select.innerHTML += `<option value="${a.id}">Appointment #${a.id} on ${a.appointmentTime.replace('T', ' ')}</option>`);
+        });
     }
 
-    // Submit feedback function
-    function submitFeedback() {
-        const review = {
+    function submitReview() {
+        const app = document.getElementById('completedAppSelect').value;
+        if (!app) { alert('Select an appointment'); return; }
+
+        const payload = {
+            appointmentId: parseInt(app),
+            customerId: currentUser.id,
             customerName: currentUser.name,
             rating: parseInt(document.getElementById('rating').value),
             comments: document.getElementById('comments').value
@@ -345,20 +205,20 @@
         fetch(API_REVIEWS, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(review)
+            body: JSON.stringify(payload)
         })
-            .then(res => res.json())
-            .then(() => {
-                alert('✅ Thank you for your feedback!');
+            .then(async res => {
+                if (!res.ok) throw new Error(await res.text());
+                alert('✅ Feedback submitted successfully!');
                 document.getElementById('comments').value = '';
-            });
+            })
+            .catch(err => alert(err.message));
     }
 
-    // Initialize page options
     window.onload = () => {
-        loadServicesDropdown();
-        loadStylistsDropdown();
-        // Restrict past dates in the datepicker
+        loadServices();
+        loadStylists();
+        loadCompletedAppointments();
         document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
     };
 </script>

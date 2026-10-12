@@ -21,19 +21,26 @@ public class AppointmentController {
         this.appointmentRepository = appointmentRepository;
     }
 
-    // Fetch all appointments
     @GetMapping
     public List<Appointment> getAllAppointments() {
         return appointmentRepository.findAll();
     }
 
-    // Fetch active/upcoming appointments for a specific stylist
     @GetMapping("/stylist/{stylistId}")
     public List<Appointment> getStylistAppointments(@PathVariable Long stylistId) {
-        return appointmentRepository.findByStylistIdAndStatusNot(stylistId, "CANCELLED");
+        return appointmentRepository.findByStylistIdAndStatus(stylistId, "CONFIRMED");
     }
 
-    // Book a new appointment with double-booking prevention
+    @GetMapping("/customer/{customerId}/completed")
+    public List<Appointment> getCompletedCustomerAppointments(@PathVariable Long customerId) {
+        return appointmentRepository.findByCustomerIdAndStatus(customerId, "COMPLETED");
+    }
+
+    @GetMapping("/completed")
+    public List<Appointment> getAllCompletedAppointments() {
+        return appointmentRepository.findByStatus("COMPLETED");
+    }
+
     @PostMapping
     public ResponseEntity<?> bookAppointment(@RequestBody Appointment appointment) {
         boolean alreadyBooked = appointmentRepository.isSlotBooked(
@@ -43,7 +50,7 @@ public class AppointmentController {
 
         if (alreadyBooked) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("❌ Selected slot is already booked for this stylist.");
+                    .body("❌ Selected time slot is already booked for this stylist.");
         }
 
         if (appointment.getStatus() == null) {
@@ -54,13 +61,12 @@ public class AppointmentController {
         return ResponseEntity.ok(saved);
     }
 
-    // Stylist Status Update Endpoint (e.g., COMPLETED or CANCELLED)
     @PutMapping("/{id}/status")
-    public ResponseEntity<?> updateAppointmentStatus(@PathVariable Long id, @RequestParam String status) {
-        return appointmentRepository.findById(id).map(appointment -> {
-            appointment.setStatus(status.toUpperCase());
-            appointmentRepository.save(appointment);
-            return ResponseEntity.ok("Appointment status updated to " + status.toUpperCase());
+    public ResponseEntity<String> updateAppointmentStatus(@PathVariable Long id, @RequestParam String status) {
+        return appointmentRepository.findById(id).map(app -> {
+            app.setStatus(status.toUpperCase());
+            appointmentRepository.save(app);
+            return ResponseEntity.ok("Appointment #" + id + " marked as " + status.toUpperCase());
         }).orElse(ResponseEntity.notFound().build());
     }
 }
