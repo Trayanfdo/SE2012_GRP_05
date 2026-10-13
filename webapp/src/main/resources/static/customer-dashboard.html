@@ -2,58 +2,98 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Diyora - Customer Portal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+
     <style>
-        .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
-        .slot-btn { padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; cursor: pointer; text-align: center; }
-        .slot-btn.selected { background: var(--primary-color); color: white; }
+        .slot-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .slot-btn {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            background: #f8f9fa;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .slot-btn.selected {
+            background: var(--primary-color);
+            color: white;
+        }
     </style>
 </head>
-<body>
 
+<body>
 <div class="header">
     <h1>Salon Diyora - Customer Portal</h1>
     <p id="welcomeMsg">Welcome Customer</p>
-    <button onclick="logout()" style="width:auto; padding:6px 16px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer;">Logout</button>
+
+    <button onclick="logout()"
+            style="width:auto; padding:6px 16px; background:#dc3545;
+                       color:white; border:none; border-radius:4px;
+                       cursor:pointer;">
+        Logout
+    </button>
 </div>
 
 <div class="container">
     <div class="module-card">
         <h2>Book Appointment</h2>
 
-        <label>Select Service:</label>
+        <label for="serviceSelect">Select Service:</label>
         <select id="serviceSelect" onchange="updateServiceDetails()">
             <option value="">-- Select Service --</option>
         </select>
-        <small id="serviceInfo" style="color:#666; display:block; margin-bottom:10px;"></small>
 
-        <label>Select Stylist:</label>
+        <small id="serviceInfo"
+               style="color:#666; display:block; margin-bottom:10px;">
+        </small>
+
+        <label for="stylistSelect">Select Stylist:</label>
         <select id="stylistSelect" onchange="generateTimeSlots()">
             <option value="">-- Select Stylist --</option>
         </select>
 
-        <label>Select Date:</label>
-        <input type="date" id="bookingDate" onchange="generateTimeSlots()">
+        <label for="bookingDate">Select Date:</label>
+        <input type="date" id="bookingDate"
+               onchange="generateTimeSlots()">
 
         <label>Available Slots:</label>
         <div id="slotsContainer" class="slot-grid">
-            <small style="color:#888; grid-column:1/-1;">Select Stylist and Date first</small>
+            <small style="color:#888; grid-column:1/-1;">
+                Select Stylist and Date first
+            </small>
         </div>
 
-        <button class="btn-book" onclick="confirmBooking()" style="margin-top:20px;">Confirm Booking</button>
-        <div id="bookingMsg" style="margin-top:15px; text-align:center; font-weight:600;"></div>
+        <button class="btn-book" onclick="confirmBooking()"
+                style="margin-top:20px;">
+            Confirm Booking
+        </button>
+
+        <div id="bookingMsg"
+             style="margin-top:15px; text-align:center; font-weight:600;">
+        </div>
     </div>
 
     <div class="module-card">
         <h2>Submit Feedback for Completed Appointments</h2>
-        <label>Completed Service:</label>
+
+        <label for="completedAppSelect">Completed Service:</label>
         <select id="completedAppSelect">
             <option value="">-- Select Completed Appointment --</option>
         </select>
 
-        <label>Rating:</label>
+        <label for="rating">Rating:</label>
         <select id="rating">
             <option value="5">⭐⭐⭐⭐⭐ 5 Stars</option>
             <option value="4">⭐⭐⭐⭐ 4 Stars</option>
@@ -62,8 +102,9 @@
             <option value="1">⭐ 1 Star</option>
         </select>
 
-        <label>Comments:</label>
-        <textarea id="comments" rows="3" placeholder="How was your service?"></textarea>
+        <label for="comments">Comments:</label>
+        <textarea id="comments" rows="3"
+                  placeholder="How was your service?"></textarea>
 
         <button onclick="submitReview()">Submit Review</button>
     </div>
@@ -75,151 +116,319 @@
     const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
     const API_REVIEWS = 'http://localhost:8081/api/reviews';
 
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
+    const currentUser = JSON.parse(
+        sessionStorage.getItem('currentUser')
+    );
+
     let selectedSlot = '';
     let servicesData = [];
 
-    if (!currentUser) window.location.href = 'login.html';
-    else document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name}`;
+    if (!currentUser) {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('welcomeMsg').innerText =
+            `Logged in as: ${currentUser.name}`;
+    }
 
-    function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
 
-    function loadServices() {
-        fetch(API_SERVICES).then(res => res.json()).then(data => {
-            servicesData = data;
+    async function loadServices() {
+        try {
+            const response = await fetch(API_SERVICES);
+
+            if (!response.ok) {
+                throw new Error('Failed to load services.');
+            }
+
+            servicesData = await response.json();
+
             const select = document.getElementById('serviceSelect');
-            select.innerHTML = '<option value="">-- Select Service --</option>';
-            data.forEach(s => select.innerHTML += `<option value="${s.id}">${s.serviceName} - Rs. ${s.price}</option>`);
-        });
+            select.innerHTML =
+                '<option value="">-- Select Service --</option>';
+
+            servicesData.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.id;
+                option.textContent =
+                    `${service.serviceName} - Rs. ${service.price}`;
+
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading services:', error);
+        }
     }
 
     function updateServiceDetails() {
-        const id = document.getElementById('serviceSelect').value;
-        const found = servicesData.find(s => s.id == id);
-        document.getElementById('serviceInfo').innerText = found ? `Duration: ${found.durationMinutes} mins | Price: Rs. ${found.price}` : '';
+        const serviceId =
+            document.getElementById('serviceSelect').value;
+
+        const service = servicesData.find(
+            item => item.id == serviceId
+        );
+
+        document.getElementById('serviceInfo').innerText = service
+            ? `Duration: ${service.durationMinutes} mins | Price: Rs. ${service.price}`
+            : '';
     }
 
-    function loadStylists() {
-        fetch(`${API_USERS}/stylists`).then(res => res.json()).then(data => {
+    async function loadStylists() {
+        try {
+            const response = await fetch(`${API_USERS}/stylists`);
+
+            if (!response.ok) {
+                throw new Error('Failed to load stylists.');
+            }
+
+            const stylists = await response.json();
             const select = document.getElementById('stylistSelect');
-            select.innerHTML = '<option value="">-- Select Stylist --</option>';
-            data.forEach(s => select.innerHTML += `<option value="${s.id}">${s.name}</option>`);
-        });
+
+            select.innerHTML =
+                '<option value="">-- Select Stylist --</option>';
+
+            stylists.forEach(stylist => {
+                const option = document.createElement('option');
+                option.value = stylist.id;
+                option.textContent = stylist.name;
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error loading stylists:', error);
+        }
     }
 
-    function generateTimeSlots() {
-        const stylistId = document.getElementById('stylistSelect').value;
-        const date = document.getElementById('bookingDate').value;
-        const container = document.getElementById('slotsContainer');
+    async function generateTimeSlots() {
+        const stylistId =
+            document.getElementById('stylistSelect').value;
 
-        if (!stylistId || !date) return;
+        const date =
+            document.getElementById('bookingDate').value;
 
-        const times = ['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
+        const container =
+            document.getElementById('slotsContainer');
 
-        fetch(`${API_APPOINTMENTS}/stylist/${stylistId}`).then(res => res.json()).then(booked => {
+        selectedSlot = '';
+
+        if (!stylistId || !date) {
+            container.innerHTML =
+                '<small style="color:#888; grid-column:1/-1;">Select Stylist and Date first</small>';
+            return;
+        }
+
+        const times = [
+            '09:00 AM', '10:00 AM', '11:00 AM',
+            '12:00 PM', '01:00 PM', '02:00 PM',
+            '03:00 PM', '04:00 PM'
+        ];
+
+        try {
+            const response = await fetch(
+                `${API_APPOINTMENTS}/stylist/${stylistId}`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to load appointments.');
+            }
+
+            const appointments = await response.json();
+
             container.innerHTML = '';
-            const bookedTimes = booked.map(b => b.appointmentTime);
 
-            times.forEach(t => {
-                const slotISO = `${date}T${convert24(t)}:00`;
+            const bookedTimes = appointments
+                .filter(appointment =>
+                    appointment.appointmentTime?.startsWith(date)
+                )
+                .map(appointment =>
+                    appointment.appointmentTime
+                );
+
+            times.forEach(time => {
+                const slotISO =
+                    `${date}T${convert24(time)}:00`;
+
                 const isBooked = bookedTimes.includes(slotISO);
+                const button = document.createElement('button');
 
-                const btn = document.createElement('div');
-                btn.className = `slot-btn ${isBooked ? 'disabled' : ''}`;
-                btn.innerText = isBooked ? `${t} (Booked)` : t;
+                button.type = 'button';
+                button.className = 'slot-btn';
+                button.textContent = isBooked
+                    ? `${time} (Booked)`
+                    : time;
+
                 if (isBooked) {
-                    btn.style.background = '#e9ecef';
-                    btn.style.color = '#dc3545';
-                    btn.style.cursor = 'not-allowed';
+                    button.disabled = true;
+                    button.style.background = '#e9ecef';
+                    button.style.color = '#dc3545';
+                    button.style.cursor = 'not-allowed';
                 } else {
-                    btn.onclick = () => {
-                        document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        selectedSlot = t;
+                    button.onclick = () => {
+                        container.querySelectorAll('.slot-btn')
+                            .forEach(slot =>
+                                slot.classList.remove('selected')
+                            );
+
+                        button.classList.add('selected');
+                        selectedSlot = time;
                     };
                 }
-                container.appendChild(btn);
+
+                container.appendChild(button);
             });
-        });
+        } catch (error) {
+            console.error('Error loading time slots:', error);
+            container.textContent =
+                'Unable to load available slots.';
+        }
     }
 
-    function convert24(t) {
-        let [time, modifier] = t.split(' ');
-        let [hrs, mins] = time.split(':');
-        if (hrs === '12') hrs = '00';
-        if (modifier === 'PM') hrs = parseInt(hrs, 10) + 12;
-        return `${hrs}:${mins}`;
+    function convert24(timeString) {
+        let [time, modifier] = timeString.split(' ');
+        let [hours, minutes] = time.split(':');
+
+        hours = parseInt(hours, 10);
+
+        if (modifier === 'PM' && hours !== 12) {
+            hours += 12;
+        } else if (modifier === 'AM' && hours === 12) {
+            hours = 0;
+        }
+
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
     }
 
-    function confirmBooking() {
-        const serviceId = document.getElementById('serviceSelect').value;
-        const stylistId = document.getElementById('stylistSelect').value;
-        const date = document.getElementById('bookingDate').value;
+    async function confirmBooking() {
+        const serviceId =
+            document.getElementById('serviceSelect').value;
+
+        const stylistId =
+            document.getElementById('stylistSelect').value;
+
+        const date =
+            document.getElementById('bookingDate').value;
 
         if (!serviceId || !stylistId || !date || !selectedSlot) {
-            alert('Fill out all fields');
+            alert('Please fill out all fields and select a time slot.');
             return;
         }
 
         const payload = {
             customerId: currentUser.id,
-            stylistId: parseInt(stylistId),
-            serviceId: parseInt(serviceId),
-            appointmentTime: `${date}T${convert24(selectedSlot)}:00`,
+            stylistId: parseInt(stylistId, 10),
+            serviceId: parseInt(serviceId, 10),
+            appointmentTime:
+                `${date}T${convert24(selectedSlot)}:00`,
             status: 'CONFIRMED'
         };
 
-        fetch(API_APPOINTMENTS, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-            .then(res => res.json())
-            .then(() => {
-                document.getElementById('bookingMsg').innerText = '✅ Appointment Confirmed!';
-                generateTimeSlots();
-                loadCompletedAppointments();
+        try {
+            const response = await fetch(API_APPOINTMENTS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            document.getElementById('bookingMsg').innerText =
+                '✅ Appointment Confirmed!';
+
+            selectedSlot = '';
+
+            await generateTimeSlots();
+            await loadCompletedAppointments();
+        } catch (error) {
+            document.getElementById('bookingMsg').innerText =
+                `Booking failed: ${error.message}`;
+        }
     }
 
-    function loadCompletedAppointments() {
-        fetch(`${API_APPOINTMENTS}/customer/${currentUser.id}/completed`).then(res => res.json()).then(data => {
-            const select = document.getElementById('completedAppSelect');
-            select.innerHTML = '<option value="">-- Select Completed Appointment --</option>';
-            data.forEach(a => select.innerHTML += `<option value="${a.id}">Appointment #${a.id} on ${a.appointmentTime.replace('T', ' ')}</option>`);
-        });
+    async function loadCompletedAppointments() {
+        try {
+            const response = await fetch(
+                `${API_APPOINTMENTS}/customer/${currentUser.id}/completed`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to load completed appointments.');
+            }
+
+            const appointments = await response.json();
+            const select =
+                document.getElementById('completedAppSelect');
+
+            select.innerHTML =
+                '<option value="">-- Select Completed Appointment --</option>';
+
+            appointments.forEach(appointment => {
+                const option = document.createElement('option');
+                option.value = appointment.id;
+                option.textContent =
+                    `Appointment #${appointment.id} on ${appointment.appointmentTime.replace('T', ' ')}`;
+
+                select.appendChild(option);
+            });
+        } catch (error) {
+            console.error(
+                'Error loading completed appointments:',
+                error
+            );
+        }
     }
 
-    function submitReview() {
-        const app = document.getElementById('completedAppSelect').value;
-        if (!app) { alert('Select an appointment'); return; }
+    async function submitReview() {
+        const appointmentId =
+            document.getElementById('completedAppSelect').value;
+
+        if (!appointmentId) {
+            alert('Please select a completed appointment.');
+            return;
+        }
 
         const payload = {
-            appointmentId: parseInt(app),
+            appointmentId: parseInt(appointmentId, 10),
             customerId: currentUser.id,
             customerName: currentUser.name,
-            rating: parseInt(document.getElementById('rating').value),
+            rating: parseInt(
+                document.getElementById('rating').value,
+                10
+            ),
             comments: document.getElementById('comments').value
         };
 
-        fetch(API_REVIEWS, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        })
-            .then(async res => {
-                if (!res.ok) throw new Error(await res.text());
-                alert('✅ Feedback submitted successfully!');
-                document.getElementById('comments').value = '';
-            })
-            .catch(err => alert(err.message));
+        try {
+            const response = await fetch(API_REVIEWS, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            alert('✅ Feedback submitted successfully!');
+            document.getElementById('comments').value = '';
+        } catch (error) {
+            alert(`Failed to submit feedback: ${error.message}`);
+        }
     }
 
     window.onload = () => {
         loadServices();
         loadStylists();
         loadCompletedAppointments();
-        document.getElementById('bookingDate').min = new Date().toISOString().split('T')[0];
+
+        document.getElementById('bookingDate').min =
+            new Date().toLocaleDateString('en-CA');
     };
 </script>
 </body>
