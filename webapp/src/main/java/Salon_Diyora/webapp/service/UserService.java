@@ -19,8 +19,10 @@ public class UserService {
     }
 
     public AppUser registerUser(AppUser user) {
-        if (user.getRole() == null || user.getRole().isEmpty()) {
+        if (user.getRole() == null || user.getRole().trim().isEmpty()) {
             user.setRole("CUSTOMER");
+        } else {
+            user.setRole(user.getRole().trim().toUpperCase());
         }
         return userRepository.save(user);
     }
@@ -31,19 +33,24 @@ public class UserService {
     }
 
     public List<AppUser> getStaffProfiles() {
-        return userRepository.findByRoleIn(List.of("STYLIST", "RECEPTIONIST"));
+        return userRepository.findByRoleIn(List.of("STYLIST", "STYLIST (STAFF)", "STAFF"));
     }
 
     public List<AppUser> getStylistsOnly() {
-        return userRepository.findByRoleIn(List.of("STYLIST"));
+        return userRepository.findByRoleIn(List.of("STYLIST", "STYLIST (STAFF)"));
     }
 
-    public AppUser updateUser(Long id, AppUser updated) {
-        return userRepository.findById(id).map(user -> {
-            user.setName(updated.getName());
-            user.setPhone(updated.getPhone());
-            user.setRole(updated.getRole());
-            return userRepository.save(user);
+    public AppUser updateUser(Long id, AppUser updatedUser) {
+        return userRepository.findById(id).map(existing -> {
+            existing.setName(updatedUser.getName());
+            existing.setPhone(updatedUser.getPhone());
+            if (updatedUser.getRole() != null) {
+                existing.setRole(updatedUser.getRole().trim().toUpperCase());
+            }
+            if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
+                existing.setPassword(updatedUser.getPassword());
+            }
+            return userRepository.save(existing);
         }).orElse(null);
     }
 

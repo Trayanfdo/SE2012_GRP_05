@@ -16,7 +16,9 @@ public class AppUser {
     private String phone;
 
     private String password;
-    private String role; // "CUSTOMER", "STYLIST", "RECEPTIONIST", "OWNER"
+
+    // Roles: "CUSTOMER", "STYLIST", "OWNER"
+    private String role;
 
     public AppUser() {}
 

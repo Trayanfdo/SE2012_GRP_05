@@ -1,17 +1,11 @@
 package Salon_Diyora.webapp.controller;
 
-import Salon_Diyora.webapp.model.Bill;
 import Salon_Diyora.webapp.model.SalonServiceItem;
 import Salon_Diyora.webapp.service.BillingService;
-import Salon_Diyora.webapp.service.PdfService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.ByteArrayInputStream;
 import java.util.List;
 
 @RestController
@@ -20,12 +14,10 @@ import java.util.List;
 public class BillingController {
 
     private final BillingService billingService;
-    private final PdfService pdfService;
 
     @Autowired
-    public BillingController(BillingService billingService, PdfService pdfService) {
+    public BillingController(BillingService billingService) {
         this.billingService = billingService;
-        this.pdfService = pdfService;
     }
 
     @GetMapping
@@ -39,36 +31,14 @@ public class BillingController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<SalonServiceItem> updateService(@PathVariable Long id, @RequestBody SalonServiceItem service) {
-        SalonServiceItem updated = billingService.updateService(id, service);
-        return updated != null ? ResponseEntity.ok(updated) : ResponseEntity.notFound().build();
+    public ResponseEntity<SalonServiceItem> updateService(@PathVariable Long id, @RequestBody SalonServiceItem updatedService) {
+        SalonServiceItem service = billingService.updateService(id, updatedService);
+        return service != null ? ResponseEntity.ok(service) : ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteService(@PathVariable Long id) {
         boolean deleted = billingService.deleteService(id);
         return deleted ? ResponseEntity.ok("Service deleted successfully.") : ResponseEntity.notFound().build();
-    }
-
-    @PostMapping("/bills")
-    public Bill generateBill(@RequestBody Bill bill) {
-        return billingService.generateBill(bill);
-    }
-
-    @GetMapping("/bills")
-    public List<Bill> getAllBills() {
-        return billingService.getAllBills();
-    }
-
-    @GetMapping("/bills/{id}/pdf")
-    public ResponseEntity<InputStreamResource> downloadInvoicePdf(@PathVariable Long id) {
-        ByteArrayInputStream pdfStream = pdfService.generateInvoicePdf(id);
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Content-Disposition", "inline; filename=Salon_Diyora_Invoice_" + id + ".pdf");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(new InputStreamResource(pdfStream));
     }
 }

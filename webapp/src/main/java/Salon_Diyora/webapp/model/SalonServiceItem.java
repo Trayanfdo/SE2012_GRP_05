@@ -3,7 +3,7 @@ package Salon_Diyora.webapp.model;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "services")
+@Table(name = "salon_services")
 public class SalonServiceItem {
 
     @Id

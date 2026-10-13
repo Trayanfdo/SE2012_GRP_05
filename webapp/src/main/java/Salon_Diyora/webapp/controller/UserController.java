@@ -3,6 +3,7 @@ package Salon_Diyora.webapp.controller;
 import Salon_Diyora.webapp.model.AppUser;
 import Salon_Diyora.webapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,7 +32,7 @@ public class UserController {
         if (loggedInUser != null) {
             return ResponseEntity.ok(loggedInUser);
         } else {
-            return ResponseEntity.status(401).body("Invalid phone number or password.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid phone number or password.");
         }
     }
 

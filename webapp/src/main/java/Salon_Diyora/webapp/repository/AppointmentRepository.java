@@ -12,12 +12,8 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    List<Appointment> findByStylistIdAndStatus(Long stylistId, String status);
+    List<Appointment> findByStylistIdAndStatusNot(Long stylistId, String status);
 
-    List<Appointment> findByCustomerIdAndStatus(Long customerId, String status);
-
-    List<Appointment> findByStatus(String status);
-
-    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.stylistId = :stylistId AND a.appointmentTime = :appointmentTime AND a.status = 'CONFIRMED'")
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.stylistId = :stylistId AND a.appointmentTime = :appointmentTime AND a.status != 'CANCELLED'")
     boolean isSlotBooked(@Param("stylistId") Long stylistId, @Param("appointmentTime") LocalDateTime appointmentTime);
 }
