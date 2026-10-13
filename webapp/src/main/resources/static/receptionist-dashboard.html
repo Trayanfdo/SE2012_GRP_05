@@ -5,59 +5,100 @@
     <title>Salon Diyora - Receptionist Portal</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
 <div class="header">
     <h1>Salon Diyora - Receptionist Billing Portal</h1>
     <p id="welcomeMsg">Welcome Receptionist</p>
-    <button onclick="logout()" style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+
+    <button onclick="logout()"
+            style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+        Logout
+    </button>
 </div>
 
 <div class="container" style="flex-direction: column;">
+
     <div class="module-card">
         <h2>Completed Services Ready for Billing</h2>
-        <ul id="completedList" style="list-style: none; padding: 0;"></ul>
+        <ul id="completedList" style="list-style: none; padding: 0;">
+        </ul>
     </div>
 
     <div class="module-card">
-        <h2>Billing History & Invoices</h2>
-        <ul id="billsList" style="list-style: none; padding: 0;"></ul>
+        <h2>Billing History &amp; Invoices</h2>
+        <ul id="billsList" style="list-style: none; padding: 0;">
+        </ul>
     </div>
+
 </div>
 
 <script>
     const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
     const API_SERVICES = 'http://localhost:8081/api/services';
 
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-    if (!currentUser || (currentUser.role.toUpperCase() !== 'RECEPTIONIST' && currentUser.role.toUpperCase() !== 'OWNER')) {
+    const currentUser = JSON.parse(
+        sessionStorage.getItem('currentUser')
+    );
+
+    if (
+        !currentUser ||
+        (
+            currentUser.role.toUpperCase() !== 'RECEPTIONIST' &&
+            currentUser.role.toUpperCase() !== 'OWNER'
+        )
+    ) {
         window.location.href = 'login.html';
     }
 
-    function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
 
     function loadCompleted() {
-        fetch(`${API_APPOINTMENTS}/completed`).then(res => res.json()).then(data => {
-            const list = document.getElementById('completedList');
-            list.innerHTML = '';
-            if (!data.length) list.innerHTML = '<li>No pending completed services to bill.</li>';
+        fetch(`${API_APPOINTMENTS}/completed`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('completedList');
 
-            data.forEach(a => {
-                list.innerHTML += `
-                    <li style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
-                        <span>
-                            <strong>Appointment #${a.id}</strong><br>
-                            Customer ID: ${a.customerId} | Time: ${a.appointmentTime.replace('T', ' ')}
-                        </span>
-                        <button onclick="processBill(${a.id}, ${a.customerId})" style="width:160px; background-color:var(--secondary-color);">Generate Bill</button>
-                    </li>`;
+                list.innerHTML = '';
+
+                if (!data.length) {
+                    list.innerHTML =
+                        '<li>No pending completed services to bill.</li>';
+                }
+
+                data.forEach(a => {
+                    list.innerHTML += `
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;">
+                                <span>
+                                    <strong>Appointment #${a.id}</strong><br>
+                                    Customer ID: ${a.customerId} |
+                                    Time: ${a.appointmentTime.replace('T', ' ')}
+                                </span>
+
+                                <button
+                                    onclick="processBill(${a.id}, ${a.customerId})"
+                                    style="width: 160px; background-color: var(--secondary-color);">
+                                    Generate Bill
+                                </button>
+                            </li>
+                        `;
+                });
             });
-        });
     }
 
     function processBill(appointmentId, customerId) {
-        const amount = prompt("Enter total billed amount (LKR):", "2500");
-        if (!amount) return;
+        const amount = prompt(
+            "Enter total billed amount (LKR):",
+            "2500"
+        );
+
+        if (!amount) {
+            return;
+        }
 
         const payload = {
             appointmentId: appointmentId,
@@ -67,33 +108,59 @@
 
         fetch(`${API_SERVICES}/bills`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(payload)
         })
             .then(res => res.json())
             .then(bill => {
                 alert('✅ Bill Created!');
-                window.open(`${API_SERVICES}/bills/${bill.id}/pdf`, '_blank');
+
+                window.open(
+                    `${API_SERVICES}/bills/${bill.id}/pdf`,
+                    '_blank'
+                );
+
                 loadCompleted();
                 loadBills();
             });
     }
 
     function loadBills() {
-        fetch(`${API_SERVICES}/bills`).then(res => res.json()).then(data => {
-            const list = document.getElementById('billsList');
-            list.innerHTML = '';
-            data.forEach(b => {
-                list.innerHTML += `
-                    <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                        <span>Invoice #${b.id} | Customer ID: ${b.customerId} | Paid: Rs. ${b.totalAmount}</span>
-                        <a href="${API_SERVICES}/bills/${b.id}/pdf" target="_blank" style="color:var(--primary-color); font-weight:600;">Download PDF</a>
-                    </li>`;
+        fetch(`${API_SERVICES}/bills`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('billsList');
+
+                list.innerHTML = '';
+
+                data.forEach(b => {
+                    list.innerHTML += `
+                            <li style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee;">
+                                <span>
+                                    Invoice #${b.id} |
+                                    Customer ID: ${b.customerId} |
+                                    Paid: Rs. ${b.totalAmount}
+                                </span>
+
+                                <a
+                                    href="${API_SERVICES}/bills/${b.id}/pdf"
+                                    target="_blank"
+                                    style="color: var(--primary-color); font-weight: 600;">
+                                    Download PDF
+                                </a>
+                            </li>
+                        `;
+                });
             });
-        });
     }
 
-    window.onload = () => { loadCompleted(); loadBills(); };
+    window.onload = () => {
+        loadCompleted();
+        loadBills();
+    };
 </script>
+
 </body>
 </html>
