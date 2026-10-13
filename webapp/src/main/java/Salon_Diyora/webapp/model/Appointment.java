@@ -13,10 +13,7 @@ public class Appointment {
 
     private Long customerId;
     private Long stylistId;
-
-    // Store comma-separated service IDs (e.g., "1,2,5") or total calculated service details
-    private String serviceIds;
-
+    private String serviceIds; // Stores single ID ("1") or multiple ("1,2")
     private LocalDateTime appointmentTime;
     private String status; // "CONFIRMED", "COMPLETED", "CANCELLED"
 

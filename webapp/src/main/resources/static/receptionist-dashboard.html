@@ -6,6 +6,51 @@
     <title>Salon Diyora - Receptionist Portal</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Styling for Collapsible Dropdown Sections */
+        details.dropdown-card {
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        details.dropdown-card summary {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-color, #5936a2);
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        details.dropdown-card summary::-webkit-details-marker {
+            display: none;
+        }
+
+        details.dropdown-card summary .dropdown-icon {
+            transition: transform 0.3s ease;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        details[open].dropdown-card summary .dropdown-icon {
+            transform: rotate(180deg);
+            color: var(--primary-color, #5936a2);
+        }
+
+        .dropdown-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+    </style>
 </head>
 <body>
 
@@ -17,25 +62,43 @@
 
 <div class="container" style="flex-direction: column;">
 
-    <!-- SECTION 1: COMPLETED APPOINTMENTS PENDING BILL GENERATION -->
-    <div class="module-card">
-        <h2><i class="fa-solid fa-bell"></i> Completed Appointments Ready for Billing</h2>
-        <p style="color:#666; font-size:0.9rem;">Services marked as completed by stylists appear here. Calculate the total and click "Generate Bill" to create the payment record and PDF invoice.</p>
-        <button onclick="loadCompletedAppointments()" style="width:auto; margin-bottom:15px;"><i class="fa-solid fa-rotate"></i> Refresh Pending Bills</button>
-        <ul id="completedList" style="list-style: none; padding: 0;"></ul>
-    </div>
+    <!-- SECTION 1: DROPDOWN FOR COMPLETED / READY APPOINTMENTS -->
+    <details class="dropdown-card" open>
+        <summary>
+            <span><i class="fa-solid fa-bell"></i> Completed Appointments Ready for Billing (<span id="pendingCount">0</span>)</span>
+            <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+        </summary>
+        <div class="dropdown-content">
+            <p style="color:#666; font-size:0.9rem;">Services marked as completed by stylists appear here. Click "Generate Bill & Invoice" to create payment record and open PDF automatically.</p>
+            <button onclick="loadCompletedAppointments()" style="width:auto; margin-bottom:15px;"><i class="fa-solid fa-rotate"></i> Refresh Pending Bills</button>
+            <ul id="completedList" style="list-style: none; padding: 0;"></ul>
+        </div>
+    </details>
 
-    <!-- SECTION 2: BILLING HISTORY AND PDF INVOICES -->
-    <div class="module-card">
-        <h2><i class="fa-solid fa-file-invoice-dollar"></i> Billing History & Invoices</h2>
-        <ul id="billsList" style="list-style: none; padding: 0;"></ul>
-    </div>
+    <!-- SECTION 2: DROPDOWN FOR BILLING HISTORY AND PDF INVOICES -->
+    <details class="dropdown-card" open>
+        <summary>
+            <span><i class="fa-solid fa-file-invoice-dollar"></i> Billing History & Invoices (<span id="historyCount">0</span>)</span>
+            <i class="fa-solid fa-chevron-down dropdown-icon"></i>
+        </summary>
+        <div class="dropdown-content">
+            <!-- SEARCH BAR FOR INVOICES -->
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="invoiceSearchInput" onkeyup="filterInvoices()" placeholder="🔍 Search by Invoice #, Customer ID, or Amount..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <button onclick="loadBills()" style="width:auto; margin-bottom:15px;"><i class="fa-solid fa-rotate"></i> Refresh Billing History</button>
+            <ul id="billsList" style="list-style: none; padding: 0;"></ul>
+        </div>
+    </details>
 
 </div>
 
 <script>
     const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
     const API_SERVICES = 'http://localhost:8081/api/services';
+
+    let allBillsCache = []; // Global cache for real-time invoice searching
 
     // Session Security Check
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
@@ -46,7 +109,7 @@
         document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Receptionist)`;
     }
 
-    // FIXED LOGOUT FUNCTION
+    // LOGOUT FUNCTION
     function logout() {
         if (confirm("Are you sure you want to log out?")) {
             sessionStorage.removeItem('currentUser');
@@ -55,61 +118,72 @@
         }
     }
 
-    // Load appointments marked COMPLETED by stylists
-    function loadCompletedAppointments() {
-        fetch(API_APPOINTMENTS)
-            .then(res => res.json())
-            .then(allApps => {
-                const list = document.getElementById('completedList');
-                list.innerHTML = '';
+    // Load appointments that have not had a bill generated yet
+    async function loadCompletedAppointments() {
+        try {
+            const billsRes = await fetch(`${API_SERVICES}/bills`);
+            const billsData = await billsRes.json();
+            const billedAppointmentIds = Array.isArray(billsData) ? billsData.map(b => b.appointmentId) : [];
 
-                if (!Array.isArray(allApps) || allApps.length === 0) {
-                    list.innerHTML = '<li style="color:#888; padding:10px;">No appointments found.</li>';
-                    return;
-                }
+            const appsRes = await fetch(API_APPOINTMENTS);
+            const allApps = await appsRes.json();
 
-                // Filter for appointments with status COMPLETED
-                const completedApps = allApps.filter(a => a.status && a.status.toUpperCase() === 'COMPLETED');
+            const list = document.getElementById('completedList');
+            const pendingCount = document.getElementById('pendingCount');
+            list.innerHTML = '';
 
-                if (completedApps.length === 0) {
-                    list.innerHTML = '<li style="color:#888; padding:10px;">No completed appointments pending bill generation.</li>';
-                    return;
-                }
+            if (!Array.isArray(allApps) || allApps.length === 0) {
+                list.innerHTML = '<li style="color:#888; padding:10px;">No appointments found in database.</li>';
+                pendingCount.innerText = '0';
+                return;
+            }
 
-                completedApps.forEach(a => {
-                    const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
-                    list.innerHTML += `
-                        <li style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
-                            <span>
-                                <strong><i class="fa-solid fa-user-check"></i> Appointment #${a.id}</strong><br>
-                                <small>Customer ID: ${a.customerId} | Stylist ID: ${a.stylistId} | Time: ${timeStr}</small>
-                            </span>
-                            <div>
-                                <button onclick="generateBillForAppointment(${a.id}, ${a.customerId})" style="background-color:var(--secondary-color, #28a745); color:white; border:none; padding:8px 14px; border-radius:4px; cursor:pointer; font-weight:600;">
-                                    <i class="fa-solid fa-calculator"></i> Calculate & Generate Bill
-                                </button>
-                            </div>
-                        </li>`;
-                });
-            })
-            .catch(err => {
-                console.error('Error loading appointments:', err);
-                document.getElementById('completedList').innerHTML = '<li style="color:red; padding:10px;">Failed to load completed appointments from server.</li>';
+            const pendingApps = allApps.filter(a => {
+                const statusStr = a.status ? a.status.toUpperCase() : '';
+                const isStatusValid = statusStr === 'COMPLETED' || statusStr === 'CONFIRMED';
+                const isNotBilled = !billedAppointmentIds.includes(a.id);
+                return isStatusValid && isNotBilled;
             });
+
+            pendingCount.innerText = pendingApps.length;
+
+            if (pendingApps.length === 0) {
+                list.innerHTML = '<li style="color:#888; padding:10px;">No pending appointments ready for billing.</li>';
+                return;
+            }
+
+            pendingApps.forEach(a => {
+                const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
+                list.innerHTML += `
+                <li style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #eee;">
+                    <span>
+                        <strong><i class="fa-solid fa-user-check"></i> Appointment #${a.id}</strong>
+                        <span style="background:#d1e7dd; color:#0f5132; padding:2px 8px; border-radius:10px; font-size:0.75rem; font-weight:600;">${a.status}</span><br>
+                        <small style="color:#666;">Customer ID: ${a.customerId} | Stylist ID: ${a.stylistId} | Time: ${timeStr}</small>
+                    </span>
+                    <div>
+                        <button onclick="processPayment(${a.id}, ${a.customerId})" style="background-color:var(--secondary-color, #28a745); color:white; border:none; padding:8px 14px; border-radius:4px; cursor:pointer; font-weight:600;">
+                            <i class="fa-solid fa-file-invoice"></i> Generate Bill & Invoice
+                        </button>
+                    </div>
+                </li>`;
+            });
+        } catch (err) {
+            console.error('Error loading appointments:', err);
+            document.getElementById('completedList').innerHTML = '<li style="color:red; padding:10px;">Failed to load appointments from server.</li>';
+        }
     }
 
-    // Generate Bill and open PDF
-    function generateBillForAppointment(appointmentId, customerId) {
-        const amount = prompt("Enter total calculated bill amount (LKR):", "2500");
-        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
-            alert("Please enter a valid billing amount.");
+    // AUTOMATIC BILL GENERATION
+    function processPayment(appointmentId, customerId) {
+        if (!confirm(`Generate invoice and bill for Appointment #${appointmentId}?`)) {
             return;
         }
 
         const payload = {
-            appointmentId: appointmentId,
-            customerId: customerId,
-            totalAmount: parseFloat(amount)
+            appointmentId: parseInt(appointmentId),
+            customerId: parseInt(customerId),
+            totalAmount: 0
         };
 
         fetch(`${API_SERVICES}/bills`, {
@@ -117,9 +191,11 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         })
-            .then(res => res.json())
+            .then(async res => {
+                if (!res.ok) throw new Error(await res.text());
+                return res.json();
+            })
             .then(bill => {
-                alert('✅ Bill generated successfully! Opening PDF Invoice...');
                 window.open(`${API_SERVICES}/bills/${bill.id}/pdf`, '_blank');
                 loadCompletedAppointments();
                 loadBills();
@@ -127,34 +203,64 @@
             .catch(err => alert('Error generating bill: ' + err.message));
     }
 
-    // Fetch existing bills
+    // Fetch existing bills and store in cache
     function loadBills() {
         fetch(`${API_SERVICES}/bills`)
             .then(res => res.json())
             .then(data => {
-                const list = document.getElementById('billsList');
-                list.innerHTML = '';
-
-                if (!Array.isArray(data) || data.length === 0) {
-                    list.innerHTML = '<li style="color:#888; padding:10px;">No invoices generated yet.</li>';
-                    return;
-                }
-
-                data.forEach(b => {
-                    list.innerHTML += `
-                        <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                            <span>
-                                <strong>Invoice #INV-${b.id}</strong> | Customer ID: ${b.customerId}<br>
-                                <small style="color:#666;">Date: ${new Date(b.billingDate).toLocaleString()}</small> |
-                                <span style="color:var(--secondary-color, #28a745); font-weight:600;">Rs. ${b.totalAmount.toLocaleString()}</span>
-                            </span>
-                            <a href="${API_SERVICES}/bills/${b.id}/pdf" target="_blank" style="color:var(--primary-color, #5936a2); font-weight:600; text-decoration:none;">
-                                <i class="fa-solid fa-file-pdf"></i> Download PDF
-                            </a>
-                        </li>`;
-                });
+                allBillsCache = Array.isArray(data) ? data : [];
+                renderBillsList(allBillsCache);
             })
             .catch(err => console.error('Error loading bills:', err));
+    }
+
+    // Render bills list dynamically
+    function renderBillsList(bills) {
+        const list = document.getElementById('billsList');
+        const historyCount = document.getElementById('historyCount');
+        list.innerHTML = '';
+
+        historyCount.innerText = allBillsCache.length;
+
+        if (bills.length === 0) {
+            list.innerHTML = '<li style="color:#888; padding:10px;">No matching invoices found.</li>';
+            return;
+        }
+
+        bills.forEach(b => {
+            list.innerHTML += `
+                <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
+                    <span>
+                        <strong>Invoice #INV-${b.id}</strong> | Customer ID: ${b.customerId}<br>
+                        <small style="color:#666;">Date: ${new Date(b.billingDate).toLocaleString()}</small> |
+                        <span style="color:var(--secondary-color, #28a745); font-weight:600;">Rs. ${b.totalAmount.toLocaleString()}</span>
+                    </span>
+                    <a href="${API_SERVICES}/bills/${b.id}/pdf" target="_blank" style="color:var(--primary-color, #5936a2); font-weight:600; text-decoration:none;">
+                        <i class="fa-solid fa-file-pdf"></i> Download PDF
+                    </a>
+                </li>`;
+        });
+    }
+
+    // Real-time search filter function
+    function filterInvoices() {
+        const query = document.getElementById('invoiceSearchInput').value.toLowerCase().trim();
+
+        const filtered = allBillsCache.filter(b => {
+            const invoiceIdStr = `inv-${b.id}`.toLowerCase();
+            const rawIdStr = `${b.id}`.toLowerCase();
+            const custIdStr = `customer #${b.customerId}`.toLowerCase();
+            const rawCustIdStr = `${b.customerId}`.toLowerCase();
+            const amountStr = `${b.totalAmount}`.toLowerCase();
+
+            return invoiceIdStr.includes(query) ||
+                rawIdStr.includes(query) ||
+                custIdStr.includes(query) ||
+                rawCustIdStr.includes(query) ||
+                amountStr.includes(query);
+        });
+
+        renderBillsList(filtered);
     }
 
     window.onload = () => {

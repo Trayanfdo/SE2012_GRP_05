@@ -1,7 +1,9 @@
 package Salon_Diyora.webapp.service;
 
+import Salon_Diyora.webapp.model.Appointment;
 import Salon_Diyora.webapp.model.Bill;
 import Salon_Diyora.webapp.model.SalonServiceItem;
+import Salon_Diyora.webapp.repository.AppointmentRepository;
 import Salon_Diyora.webapp.repository.BillRepository;
 import Salon_Diyora.webapp.repository.ServiceItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +17,15 @@ public class BillingService {
 
     private final ServiceItemRepository serviceItemRepository;
     private final BillRepository billRepository;
+    private final AppointmentRepository appointmentRepository;
 
     @Autowired
-    public BillingService(ServiceItemRepository serviceItemRepository, BillRepository billRepository) {
+    public BillingService(ServiceItemRepository serviceItemRepository,
+                          BillRepository billRepository,
+                          AppointmentRepository appointmentRepository) {
         this.serviceItemRepository = serviceItemRepository;
         this.billRepository = billRepository;
+        this.appointmentRepository = appointmentRepository;
     }
 
     public List<SalonServiceItem> getAllServices() {
@@ -47,15 +53,36 @@ public class BillingService {
         return false;
     }
 
-    // Fixes 'cannot find symbol method generateBill'
+    // AUTOMATIC BILL GENERATION WITH DYNAMIC TOTAL CALCULATION
     public Bill generateBill(Bill bill) {
         if (bill.getBillingDate() == null) {
             bill.setBillingDate(LocalDateTime.now());
         }
+
+        // If totalAmount is 0 or unassigned, compute the total from selected services
+        if (bill.getTotalAmount() <= 0 && bill.getAppointmentId() != null) {
+            double computedTotal = 0.0;
+            Appointment appointment = appointmentRepository.findById(bill.getAppointmentId()).orElse(null);
+
+            if (appointment != null && appointment.getServiceIds() != null && !appointment.getServiceIds().trim().isEmpty()) {
+                String[] ids = appointment.getServiceIds().split(",");
+                for (String idStr : ids) {
+                    try {
+                        Long sId = Long.parseLong(idStr.trim());
+                        SalonServiceItem item = serviceItemRepository.findById(sId).orElse(null);
+                        if (item != null) {
+                            computedTotal += item.getPrice();
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+
+            bill.setTotalAmount(computedTotal);
+        }
+
         return billRepository.save(bill);
     }
 
-    // Fixes 'cannot find symbol method getAllBills'
     public List<Bill> getAllBills() {
         return billRepository.findAll();
     }

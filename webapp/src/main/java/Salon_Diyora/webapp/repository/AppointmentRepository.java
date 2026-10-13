@@ -12,19 +12,23 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
-    // Fetch all non-cancelled appointments for a specific stylist
+    // 1. Resolves: Cannot resolve method 'findByStylistIdAndStatusNot'
+    // Fetches all appointments for a stylist except those with a specific status (e.g. 'CANCELLED')
     List<Appointment> findByStylistIdAndStatusNot(Long stylistId, String status);
 
-    // Fetch appointments for a specific stylist by exact status
+    // 2. Fetches appointments assigned to a stylist by exact status (e.g. 'CONFIRMED')
     List<Appointment> findByStylistIdAndStatus(Long stylistId, String status);
 
-    // Fetch upcoming/confirmed appointments for a specific customer
+    // 3. Fetches appointments for a customer by status
     List<Appointment> findByCustomerIdAndStatus(Long customerId, String status);
 
-    // Fetch appointments by status (e.g., "COMPLETED" for Receptionist billing)
+    // 4. Fetches all appointments by status (e.g. 'COMPLETED' for Receptionist billing)
     List<Appointment> findByStatus(String status);
 
-    // Check double booking
+    // 5. Fetches all appointments for a specific stylist
+    List<Appointment> findByStylistId(Long stylistId);
+
+    // 6. Double-booking check query (only 'CONFIRMED' status locks a slot)
     @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.stylistId = :stylistId AND a.appointmentTime = :appointmentTime AND a.status = 'CONFIRMED'")
     boolean isSlotBooked(@Param("stylistId") Long stylistId, @Param("appointmentTime") LocalDateTime appointmentTime);
 }

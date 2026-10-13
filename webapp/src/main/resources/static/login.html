@@ -38,11 +38,11 @@
             <i class="fa-solid fa-eye toggle-password" onclick="togglePasswordVisibility('regPassword', this)"></i>
         </div>
 
+        <!-- OWNER OPTION REMOVED -->
         <select id="regRole">
             <option value="CUSTOMER">Customer</option>
             <option value="STYLIST">Stylist (Staff)</option>
             <option value="RECEPTIONIST">Receptionist</option>
-            <option value="OWNER">Salon Owner</option>
         </select>
 
         <button class="btn-book" onclick="performRegistration()">Register Account</button>
@@ -75,7 +75,7 @@
             return;
         }
 
-        fetch('http://localhost:8081/api/users/login', {
+        fetch(`${API_URL}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ phone, password })
@@ -87,22 +87,14 @@
             .then(user => {
                 msgBox.style.color = 'var(--secondary-color, #28a745)';
                 msgBox.innerText = `Welcome ${user.name}! Redirecting...`;
-
-                // Store user in session
                 sessionStorage.setItem('currentUser', JSON.stringify(user));
 
                 setTimeout(() => {
                     const role = user.role ? user.role.toUpperCase() : '';
-
-                    if (role.includes('OWNER')) {
-                        window.location.href = 'owner-dashboard.html';
-                    } else if (role.includes('RECEPTIONIST')) {
-                        window.location.href = 'receptionist-dashboard.html';
-                    } else if (role.includes('STYLIST') || role.includes('STAFF')) {
-                        window.location.href = 'stylist-dashboard.html';
-                    } else {
-                        window.location.href = 'customer-dashboard.html';
-                    }
+                    if (role.includes('OWNER')) window.location.href = 'owner-dashboard.html';
+                    else if (role.includes('RECEPTIONIST')) window.location.href = 'receptionist-dashboard.html';
+                    else if (role.includes('STYLIST') || role.includes('STAFF')) window.location.href = 'stylist-dashboard.html';
+                    else window.location.href = 'customer-dashboard.html';
                 }, 1000);
             })
             .catch(err => {
@@ -110,6 +102,7 @@
                 msgBox.innerText = err.message || 'Login failed.';
             });
     }
+
     function performRegistration() {
         const user = {
             name: document.getElementById('regName').value,
@@ -125,23 +118,10 @@
         })
             .then(res => res.json())
             .then(data => {
-                document.getElementById('regMessage').style.color = 'var(--secondary-color)';
+                document.getElementById('regMessage').style.color = 'var(--secondary-color, #28a745)';
                 document.getElementById('regMessage').innerText = `Registered successfully! Please login.`;
             });
     }
-    setTimeout(() => {
-        const role = user.role ? user.role.toUpperCase() : '';
-
-        if (role.includes('OWNER')) {
-            window.location.href = 'owner-dashboard.html';
-        } else if (role.includes('RECEPTIONIST')) {
-            window.location.href = 'receptionist-dashboard.html';
-        } else if (role.includes('STYLIST') || role.includes('STAFF')) {
-            window.location.href = 'stylist-dashboard.html';
-        } else {
-            window.location.href = 'customer-dashboard.html';
-        }
-    }, 1000);
 </script>
 </body>
 </html>

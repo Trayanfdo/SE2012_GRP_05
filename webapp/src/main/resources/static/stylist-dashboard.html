@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Diyora - Stylist Schedule</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
@@ -33,6 +34,11 @@
         .badge-COMPLETED { background: #d1e7dd; color: #0f5132; }
         .badge-CANCELLED { background: #f8d7da; color: #842029; }
 
+        .action-group {
+            display: flex;
+            gap: 8px;
+        }
+
         details.history-dropdown {
             background: #f8f9fa;
             border: 1px solid #e0e0e0;
@@ -48,6 +54,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+            user-select: none;
         }
     </style>
 </head>
@@ -68,14 +75,14 @@
             <p style="color: #888;">Loading active schedule...</p>
         </div>
 
-        <!-- COLLAPSIBLE DROPDOWN FOR PREVIOUS / COMPLETED APPOINTMENTS -->
-        <details class="history-dropdown">
+        <!-- COLLAPSIBLE DROPDOWN FOR PAST APPOINTMENTS (COMPLETED & CANCELLED) -->
+        <details class="history-dropdown" open>
             <summary>
-                <span><i class="fa-solid fa-history"></i> Previous & Completed Appointments (<span id="historyCount">0</span>)</span>
+                <span><i class="fa-solid fa-history"></i> Completed & Cancelled History (<span id="historyCount">0</span>)</span>
                 <i class="fa-solid fa-chevron-down"></i>
             </summary>
             <div id="pastScheduleContainer" style="margin-top: 10px;">
-                <p style="color: #888;">No past appointments found in history.</p>
+                <p style="color: #888;">No completed or cancelled appointments found in history.</p>
             </div>
         </details>
     </div>
@@ -88,7 +95,7 @@
     if (!currentUser || (currentUser.role.toUpperCase() !== 'STYLIST' && !currentUser.role.toUpperCase().includes('STAFF'))) {
         window.location.href = 'login.html';
     } else {
-        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Stylist)`;
+        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Stylist ID: ${currentUser.id})`;
     }
 
     function logout() {
@@ -97,6 +104,8 @@
     }
 
     function loadSchedule() {
+        if (!currentUser || !currentUser.id) return;
+
         fetch(`${API_APPOINTMENTS}/stylist/${currentUser.id}`)
             .then(res => res.json())
             .then(myApps => {
@@ -108,59 +117,62 @@
                 pastContainer.innerHTML = '';
 
                 if (!Array.isArray(myApps) || myApps.length === 0) {
-                    activeContainer.innerHTML = '<p style="color:#888;">No active appointments assigned to you.</p>';
-                    pastContainer.innerHTML = '<p style="color:#888;">No previous appointments found.</p>';
+                    activeContainer.innerHTML = '<p style="color:#888;">No appointments assigned to you.</p>';
+                    pastContainer.innerHTML = '<p style="color:#888;">No completed or cancelled history found.</p>';
                     historyCount.innerText = '0';
                     return;
                 }
 
+                // Filter CONFIRMED vs COMPLETED/CANCELLED appointments
                 const activeApps = myApps.filter(a => a.status === 'CONFIRMED');
                 const pastApps = myApps.filter(a => a.status === 'COMPLETED' || a.status === 'CANCELLED');
 
                 historyCount.innerText = pastApps.length;
 
-                // Active Appointments
+                // Render Active Appointments
                 if (activeApps.length === 0) {
                     activeContainer.innerHTML = '<p style="color:#888;">No active upcoming appointments.</p>';
                 } else {
                     activeApps.forEach(a => {
                         const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
                         activeContainer.innerHTML += `
-                                <div class="schedule-card ${a.status}">
-                                    <div>
-                                        <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
-                                        <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
-                                        <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
-                                    </div>
-                                    <div>
-                                        <button onclick="updateStatus(${a.id}, 'COMPLETED')" style="background-color:#28a745; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
-                                            <i class="fa-solid fa-check"></i> Mark Complete
-                                        </button>
-                                        <button onclick="updateStatus(${a.id}, 'CANCELLED')" style="background-color:#dc3545; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
-                                            <i class="fa-solid fa-xmark"></i> Cancel
-                                        </button>
-                                    </div>
-                                </div>`;
+                            <div class="schedule-card ${a.status}">
+                                <div>
+                                    <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
+                                    <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
+                                    <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
+                                </div>
+                                <div class="action-group">
+                                    <button onclick="updateStatus(${a.id}, 'COMPLETED')" style="background-color:#28a745; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
+                                        <i class="fa-solid fa-check"></i> Mark Complete
+                                    </button>
+                                    <button onclick="updateStatus(${a.id}, 'CANCELLED')" style="background-color:#dc3545; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
+                                        <i class="fa-solid fa-xmark"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>`;
                     });
                 }
 
-                // Past Appointments
+                // Render Completed & Cancelled Appointments in History Section
                 if (pastApps.length === 0) {
-                    pastContainer.innerHTML = '<p style="color:#888;">No past appointments found in history.</p>';
+                    pastContainer.innerHTML = '<p style="color:#888;">No completed or cancelled appointments found in history.</p>';
                 } else {
                     pastApps.forEach(a => {
                         const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
                         pastContainer.innerHTML += `
-                                <div class="schedule-card ${a.status}">
-                                    <div>
-                                        <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
-                                        <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
-                                        <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
-                                    </div>
-                                    <div>
-                                        <span style="font-weight:600; color:#555; font-size:0.85rem;"><i class="fa-solid fa-check-double"></i> ${a.status}</span>
-                                    </div>
-                                </div>`;
+                            <div class="schedule-card ${a.status}">
+                                <div>
+                                    <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
+                                    <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
+                                    <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
+                                </div>
+                                <div>
+                                    <span class="status-badge badge-${a.status}">
+                                        ${a.status}
+                                    </span>
+                                </div>
+                            </div>`;
                     });
                 }
             })
