@@ -14,7 +14,7 @@ public class Review {
     private Long appointmentId;
     private Long customerId;
     private String customerName;
-    private int rating;
+    private int rating; // 1 to 5 stars
 
     @Column(length = 1000)
     private String comments;
@@ -34,6 +34,7 @@ public class Review {
         this.createdAt = LocalDateTime.now();
     }
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

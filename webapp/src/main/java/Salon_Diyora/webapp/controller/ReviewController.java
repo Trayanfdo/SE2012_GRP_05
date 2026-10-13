@@ -1,8 +1,9 @@
 package Salon_Diyora.webapp.controller;
 
 import Salon_Diyora.webapp.model.Review;
-import Salon_Diyora.webapp.repository.ReviewRepository;
+import Salon_Diyora.webapp.service.ReviewService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,20 +13,30 @@ import java.util.List;
 @CrossOrigin(origins = "*")
 public class ReviewController {
 
-    private final ReviewRepository reviewRepository;
+    private final ReviewService reviewService;
 
     @Autowired
-    public ReviewController(ReviewRepository reviewRepository) {
-        this.reviewRepository = reviewRepository;
+    public ReviewController(ReviewService reviewService) {
+        this.reviewService = reviewService;
+    }
+
+    @PostMapping
+    public ResponseEntity<?> submitReview(@RequestBody Review review) {
+        try {
+            Review savedReview = reviewService.submitReview(review);
+            return ResponseEntity.ok(savedReview);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping
     public List<Review> getAllReviews() {
-        return reviewRepository.findAll();
+        return reviewService.getAllReviews();
     }
 
-    @PostMapping
-    public Review submitReview(@RequestBody Review review) {
-        return reviewRepository.save(review);
+    @GetMapping("/average")
+    public double getAverageRating() {
+        return reviewService.calculateAverageRating();
     }
 }

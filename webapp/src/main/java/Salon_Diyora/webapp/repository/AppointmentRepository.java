@@ -12,8 +12,19 @@ import java.util.List;
 @Repository
 public interface AppointmentRepository extends JpaRepository<Appointment, Long> {
 
+    // Fetch all non-cancelled appointments for a specific stylist
     List<Appointment> findByStylistIdAndStatusNot(Long stylistId, String status);
 
-    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.stylistId = :stylistId AND a.appointmentTime = :appointmentTime AND a.status != 'CANCELLED'")
+    // Fetch appointments for a specific stylist by exact status
+    List<Appointment> findByStylistIdAndStatus(Long stylistId, String status);
+
+    // Fetch upcoming/confirmed appointments for a specific customer
+    List<Appointment> findByCustomerIdAndStatus(Long customerId, String status);
+
+    // Fetch appointments by status (e.g., "COMPLETED" for Receptionist billing)
+    List<Appointment> findByStatus(String status);
+
+    // Check double booking
+    @Query("SELECT COUNT(a) > 0 FROM Appointment a WHERE a.stylistId = :stylistId AND a.appointmentTime = :appointmentTime AND a.status = 'CONFIRMED'")
     boolean isSlotBooked(@Param("stylistId") Long stylistId, @Param("appointmentTime") LocalDateTime appointmentTime);
 }

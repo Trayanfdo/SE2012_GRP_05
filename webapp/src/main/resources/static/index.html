@@ -130,6 +130,37 @@
         overlay.style.display = 'block';
         alertBox.style.display = 'block';
     }
+    function loadUpcomingCustomerAppointments() {
+        fetch(`http://localhost:8081/api/appointments/customer/${currentUser.id}/upcoming`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('upcomingAppointmentsList');
+                list.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p style="color: #888;">You have no upcoming appointments scheduled.</p>';
+                    return;
+                }
+
+                data.forEach(app => {
+                    list.innerHTML += `
+                    <div style="padding: 12px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; background: #fdfdfd;">
+                        <strong>📅 Appointment #${app.id}</strong><br>
+                        <span>Time: ${app.appointmentTime.replace('T', ' ')}</span><br>
+                        <small>Stylist ID: ${app.stylistId} | Service ID: ${app.serviceId}</small><br>
+                        <span style="color: #0d6efd; font-weight: bold; font-size: 0.85rem;">Status: ${app.status}</span>
+                    </div>`;
+                });
+            })
+            .catch(err => console.error('Error fetching upcoming appointments:', err));
+    }
+
+    // Call function on page load and after confirming a new booking
+    window.onload = () => {
+        loadServices();
+        loadStylists();
+        loadUpcomingCustomerAppointments();
+    };
 
     function closeSalonAlert() {
         const overlay = document.getElementById('customAlertOverlay');

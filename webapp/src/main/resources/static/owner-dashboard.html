@@ -2,13 +2,65 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Salon Diyora - Owner Control Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Owner Management Dashboard</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         .form-row { display: flex; gap: 12px; margin-bottom: 20px; align-items: center; }
-        .btn-action { padding: 6px 12px; border: none; border-radius: 4px; color: white; cursor: pointer; }
-        .btn-edit { background: #ffc107; color: #333; }
-        .btn-delete { background: #dc3545; }
+        .btn-action { padding: 6px 14px; border: none; border-radius: 4px; color: white; cursor: pointer; font-size: 0.85rem; }
+        .btn-edit { background: #ffc107; color: #333; font-weight: 600; margin-right: 5px; }
+        .btn-delete { background: #dc3545; font-weight: 600; }
+        .btn-edit:hover { background: #e0a800; }
+        .btn-delete:hover { background: #c82333; }
+
+        /* Modal popup styling for editing services directly */
+        #editModalOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        #editServiceModal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 25px 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            z-index: 1001;
+            width: 350px;
+            border-top: 5px solid var(--primary-color, #5936a2);
+        }
+
+        #editServiceModal h3 {
+            margin-top: 0;
+            color: var(--primary-color, #5936a2);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        #editServiceModal label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #555;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        #editServiceModal input {
+            margin-bottom: 12px;
+        }
+
+        .modal-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
     </style>
 </head>
 <body>
@@ -20,26 +72,53 @@
 </div>
 
 <div class="container" style="flex-direction: column;">
+    <!-- Manage Salon Services & Pricing Module -->
     <div class="module-card">
         <h2>Manage Salon Services & Pricing</h2>
+
+        <!-- Add Service Form -->
         <div class="form-row">
-            <input type="text" id="newServiceName" placeholder="Service Name" style="flex: 2; margin-bottom: 0 !important;" required>
+            <input type="text" id="newServiceName" placeholder="Service Name (e.g., Haircut)" style="flex: 2; margin-bottom: 0 !important;" required>
             <input type="number" id="newServicePrice" placeholder="Price (LKR)" style="flex: 1; margin-bottom: 0 !important;" required>
             <input type="number" id="newServiceDuration" placeholder="Duration (Mins)" style="flex: 1; margin-bottom: 0 !important;" required>
-            <button onclick="addNewService()" style="flex: 1; margin-bottom: 0 !important; background-color: var(--secondary-color);">+ Add Service</button>
+            <button onclick="addNewService()" style="flex: 1; white-space: nowrap; margin-bottom: 0 !important; background-color: var(--secondary-color, #28a745);">+ Add Service</button>
         </div>
+
         <ul id="ownerServicesList" style="list-style: none; padding: 0;"></ul>
     </div>
 
+    <!-- Staff Directory Module -->
     <div class="module-card">
         <h2>Staff Directory</h2>
         <ul id="staffList" style="list-style: none; padding: 0;"></ul>
     </div>
 
+    <!-- Feedback & Reviews Module -->
     <div class="module-card">
         <h2>Customer Feedback & Reviews</h2>
         <p><strong>Average Rating:</strong> ⭐ <span id="avgRating">0.0</span> / 5</p>
         <ul id="reviewsList" style="list-style: none; padding: 0;"></ul>
+    </div>
+</div>
+
+<!-- EDIT SERVICE MODAL POPUP -->
+<div id="editModalOverlay" onclick="closeEditModal()"></div>
+<div id="editServiceModal">
+    <h3>Edit Service</h3>
+    <input type="hidden" id="editServiceId">
+
+    <label for="editServiceName">Service Name:</label>
+    <input type="text" id="editServiceName" required>
+
+    <label for="editServicePrice">Price (LKR):</label>
+    <input type="number" id="editServicePrice" required>
+
+    <label for="editServiceDuration">Duration (Minutes):</label>
+    <input type="number" id="editServiceDuration" required>
+
+    <div class="modal-btn-group">
+        <button onclick="saveServiceChanges()" style="background-color: var(--primary-color, #5936a2);">Save Changes</button>
+        <button onclick="closeEditModal()" style="background-color: #6c757d;">Cancel</button>
     </div>
 </div>
 
@@ -48,32 +127,65 @@
     const API_USERS = 'http://localhost:8081/api/users';
     const API_REVIEWS = 'http://localhost:8081/api/reviews';
 
+    // Role Security Check
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-    if (!currentUser || currentUser.role.toUpperCase() !== 'OWNER') window.location.href = 'login.html';
-
-    function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
-    function loadServices() {
-        fetch(API_SERVICES).then(res => res.json()).then(data => {
-            const list = document.getElementById('ownerServicesList');
-            list.innerHTML = '';
-            data.forEach(s => {
-                list.innerHTML += `
-                    <li style="display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #eee;">
-                        <span><strong>${s.serviceName}</strong> - Rs. ${s.price} (${s.durationMinutes} mins)</span>
-                        <div>
-                            <button class="btn-action btn-delete" onclick="deleteService(${s.id})">Delete</button>
-                        </div>
-                    </li>`;
-            });
-        });
+    if (!currentUser || currentUser.role.toUpperCase() !== 'OWNER') {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Owner)`;
     }
 
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // Load services with both Edit and Delete buttons
+    function loadServices() {
+        fetch(API_SERVICES)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('ownerServicesList');
+                list.innerHTML = '';
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<li style="color: red; padding: 10px 0;">No services found in catalogue.</li>';
+                    return;
+                }
+
+                data.forEach(s => {
+                    list.innerHTML += `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;">
+                            <span>
+                                <strong>${s.serviceName}</strong> (ID: ${s.id})<br>
+                                <small style="color: #666;">⏱ ${s.durationMinutes} mins</small> |
+                                <span style="color: var(--secondary-color, #28a745); font-weight: 600;">Rs. ${s.price.toLocaleString()}</span>
+                            </span>
+                            <div>
+                                <button class="btn-action btn-edit" onclick="openEditModal(${s.id}, '${s.serviceName}', ${s.price}, ${s.durationMinutes})">Edit</button>
+                                <button class="btn-action btn-delete" onclick="deleteService(${s.id})">Delete</button>
+                            </div>
+                        </li>`;
+                });
+            })
+            .catch(err => console.error('Error loading services:', err));
+    }
+
+    // Add new service
     function addNewService() {
+        const name = document.getElementById('newServiceName').value;
+        const price = document.getElementById('newServicePrice').value;
+        const duration = document.getElementById('newServiceDuration').value;
+
+        if (!name || !price || !duration) {
+            alert('Please fill in all service fields.');
+            return;
+        }
+
         const payload = {
-            serviceName: document.getElementById('newServiceName').value,
-            price: parseFloat(document.getElementById('newServicePrice').value),
-            durationMinutes: parseInt(document.getElementById('newServiceDuration').value)
+            serviceName: name,
+            price: parseFloat(price),
+            durationMinutes: parseInt(duration)
         };
 
         fetch(API_SERVICES, {
@@ -81,16 +193,74 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
-            loadServices();
+            alert('✅ Service added successfully!');
             document.getElementById('newServiceName').value = '';
             document.getElementById('newServicePrice').value = '';
             document.getElementById('newServiceDuration').value = '';
+            loadServices();
         });
     }
 
+    // Open Edit Modal with existing data pre-filled
+    function openEditModal(id, name, price, duration) {
+        document.getElementById('editServiceId').value = id;
+        document.getElementById('editServiceName').value = name;
+        document.getElementById('editServicePrice').value = price;
+        document.getElementById('editServiceDuration').value = duration;
+
+        document.getElementById('editModalOverlay').style.display = 'block';
+        document.getElementById('editServiceModal').style.display = 'block';
+    }
+
+    // Close Edit Modal
+    function closeEditModal() {
+        document.getElementById('editModalOverlay').style.display = 'none';
+        document.getElementById('editServiceModal').style.display = 'none';
+    }
+
+    // Submit service edits to Spring Boot API via PUT request
+    function saveServiceChanges() {
+        const id = document.getElementById('editServiceId').value;
+        const name = document.getElementById('editServiceName').value;
+        const price = document.getElementById('editServicePrice').value;
+        const duration = document.getElementById('editServiceDuration').value;
+
+        if (!name || !price || !duration) {
+            alert('Please fill out all fields before saving.');
+            return;
+        }
+
+        const updatedData = {
+            serviceName: name,
+            price: parseFloat(price),
+            durationMinutes: parseInt(duration)
+        };
+
+        fetch(`${API_SERVICES}/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Failed to update service');
+                return res.json();
+            })
+            .then(() => {
+                alert('✅ Service updated successfully!');
+                closeEditModal();
+                loadServices();
+            })
+            .catch(err => alert('Error updating service: ' + err.message));
+    }
+
+    // Delete service
     function deleteService(id) {
-        if (confirm('Delete this service?')) {
-            fetch(`${API_SERVICES}/${id}`, { method: 'DELETE' }).then(() => loadServices());
+        if (confirm(`Are you sure you want to delete service ID ${id}?`)) {
+            fetch(`${API_SERVICES}/${id}`, { method: 'DELETE' })
+                .then(() => {
+                    alert('Service deleted successfully.');
+                    loadServices();
+                });
         }
     }
 
@@ -98,6 +268,10 @@
         fetch(`${API_USERS}/staff`).then(res => res.json()).then(data => {
             const list = document.getElementById('staffList');
             list.innerHTML = '';
+            if (!data || data.length === 0) {
+                list.innerHTML = '<li>No staff found.</li>';
+                return;
+            }
             data.forEach(s => {
                 list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee;"><strong>${s.name}</strong> - ${s.role} (${s.phone})</li>`;
             });
@@ -108,15 +282,23 @@
         fetch(API_REVIEWS).then(res => res.json()).then(data => {
             const list = document.getElementById('reviewsList');
             list.innerHTML = '';
+            if (!data || data.length === 0) {
+                list.innerHTML = '<li>No customer reviews yet.</li>';
+                return;
+            }
             data.forEach(r => {
-                list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee;"><strong>${r.customerName}</strong> ⭐ ${r.rating}/5<br><p>${r.comments}</p></li>`;
+                list.innerHTML += `<li style="padding:10px; border-bottom:1px solid #eee;"><strong>${r.customerName}</strong> ⭐ ${r.rating}/5<br><p style="margin:5px 0;">${r.comments}</p></li>`;
             });
         });
 
         fetch(`${API_REVIEWS}/average`).then(res => res.text()).then(avg => document.getElementById('avgRating').innerText = avg);
     }
 
-    window.onload = () => { loadServices(); loadStaff(); loadReviews(); };
+    window.onload = () => {
+        loadServices();
+        loadStaff();
+        loadReviews();
+    };
 </script>
 </body>
 </html>

@@ -13,16 +13,19 @@ public class Appointment {
 
     private Long customerId;
     private Long stylistId;
-    private Long serviceId;
+
+    // Store comma-separated service IDs (e.g., "1,2,5") or total calculated service details
+    private String serviceIds;
+
     private LocalDateTime appointmentTime;
     private String status; // "CONFIRMED", "COMPLETED", "CANCELLED"
 
     public Appointment() {}
 
-    public Appointment(Long customerId, Long stylistId, Long serviceId, LocalDateTime appointmentTime, String status) {
+    public Appointment(Long customerId, Long stylistId, String serviceIds, LocalDateTime appointmentTime, String status) {
         this.customerId = customerId;
         this.stylistId = stylistId;
-        this.serviceId = serviceId;
+        this.serviceIds = serviceIds;
         this.appointmentTime = appointmentTime;
         this.status = status;
     }
@@ -36,8 +39,8 @@ public class Appointment {
     public Long getStylistId() { return stylistId; }
     public void setStylistId(Long stylistId) { this.stylistId = stylistId; }
 
-    public Long getServiceId() { return serviceId; }
-    public void setServiceId(Long serviceId) { this.serviceId = serviceId; }
+    public String getServiceIds() { return serviceIds; }
+    public void setServiceIds(String serviceIds) { this.serviceIds = serviceIds; }
 
     public LocalDateTime getAppointmentTime() { return appointmentTime; }
     public void setAppointmentTime(LocalDateTime appointmentTime) { this.appointmentTime = appointmentTime; }

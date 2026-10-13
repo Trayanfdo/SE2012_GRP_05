@@ -26,9 +26,16 @@ public class AppointmentController {
         return appointmentRepository.findAll();
     }
 
+    // Get all appointments assigned to a specific stylist
     @GetMapping("/stylist/{stylistId}")
     public List<Appointment> getStylistAppointments(@PathVariable Long stylistId) {
         return appointmentRepository.findByStylistIdAndStatusNot(stylistId, "CANCELLED");
+    }
+
+    // Get upcoming appointments for a specific customer
+    @GetMapping("/customer/{customerId}/upcoming")
+    public List<Appointment> getUpcomingCustomerAppointments(@PathVariable Long customerId) {
+        return appointmentRepository.findByCustomerIdAndStatus(customerId, "CONFIRMED");
     }
 
     @PostMapping
@@ -40,7 +47,7 @@ public class AppointmentController {
 
         if (alreadyBooked) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body("❌ Selected slot is already booked for this stylist. Please choose another time slot.");
+                    .body("Selected slot is already booked for this stylist.");
         }
 
         if (appointment.getStatus() == null) {
@@ -49,5 +56,15 @@ public class AppointmentController {
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
         return ResponseEntity.ok(savedAppointment);
+    }
+
+    // Endpoint for updating appointment status (COMPLETED / CANCELLED)
+    @PutMapping("/{id}/status")
+    public ResponseEntity<String> updateStatus(@PathVariable Long id, @RequestParam String status) {
+        return appointmentRepository.findById(id).map(app -> {
+            app.setStatus(status.toUpperCase());
+            appointmentRepository.save(app);
+            return ResponseEntity.ok("Appointment #" + id + " marked as " + status.toUpperCase());
+        }).orElse(ResponseEntity.notFound().build());
     }
 }

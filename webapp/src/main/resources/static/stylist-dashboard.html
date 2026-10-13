@@ -2,21 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Salon Diyora - Stylist Portal</title>
+    <title>Salon Diyora - Stylist Schedule</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <style>
+        .schedule-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 5px solid var(--primary-color, #5936a2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .schedule-card.COMPLETED { border-left-color: #28a745; background: #f8fff9; }
+        .schedule-card.CANCELLED { border-left-color: #dc3545; background: #fff8f8; opacity: 0.8; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .badge-CONFIRMED { background: #e3f2fd; color: #0d6efd; }
+        .badge-COMPLETED { background: #d1e7dd; color: #0f5132; }
+        .badge-CANCELLED { background: #f8d7da; color: #842029; }
+
+        details.history-dropdown {
+            background: #f8f9fa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-top: 25px;
+        }
+
+        details.history-dropdown summary {
+            font-weight: 600;
+            cursor: pointer;
+            color: #555;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>Salon Diyora - Stylist Schedule</h1>
+    <h1>Salon Diyora - Stylist Portal</h1>
     <p id="welcomeMsg">Welcome Stylist</p>
     <button onclick="logout()" style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
 </div>
 
 <div class="container" style="flex-direction: column;">
     <div class="module-card">
-        <h2>My Upcoming Work Schedule</h2>
-        <ul id="scheduleList" style="list-style: none; padding: 0;"></ul>
+        <h2><i class="fa-solid fa-calendar-check"></i> Active & Upcoming Appointments</h2>
+        <button onclick="loadSchedule()" style="width: auto; margin-bottom: 15px;"><i class="fa-solid fa-rotate"></i> Refresh Schedule</button>
+
+        <div id="activeScheduleContainer">
+            <p style="color: #888;">Loading active schedule...</p>
+        </div>
+
+        <!-- COLLAPSIBLE DROPDOWN FOR PREVIOUS / COMPLETED APPOINTMENTS -->
+        <details class="history-dropdown">
+            <summary>
+                <span><i class="fa-solid fa-history"></i> Previous & Completed Appointments (<span id="historyCount">0</span>)</span>
+                <i class="fa-solid fa-chevron-down"></i>
+            </summary>
+            <div id="pastScheduleContainer" style="margin-top: 10px;">
+                <p style="color: #888;">No past appointments found in history.</p>
+            </div>
+        </details>
     </div>
 </div>
 
@@ -24,39 +85,98 @@
     const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
 
     const currentUser = JSON.parse(sessionStorage.getItem('currentUser'));
-    if (!currentUser || currentUser.role.toUpperCase() !== 'STYLIST') window.location.href = 'login.html';
-    else document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Stylist)`;
-
-    function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
-    function loadSchedule() {
-        fetch(`${API_APPOINTMENTS}/stylist/${currentUser.id}`).then(res => res.json()).then(data => {
-            const list = document.getElementById('scheduleList');
-            list.innerHTML = '';
-            if (!data.length) list.innerHTML = '<li>No upcoming bookings assigned.</li>';
-
-            data.forEach(a => {
-                list.innerHTML += `
-                    <li style="display:flex; justify-content:space-between; align-items:center; padding:15px; border-bottom:1px solid #eee;">
-                        <span>
-                            <strong>Appointment #${a.id}</strong><br>
-                            Time: ${a.appointmentTime.replace('T', ' ')} | Status: ${a.status}
-                        </span>
-                        <div>
-                            <button onclick="updateStatus(${a.id}, 'COMPLETED')" style="background-color:var(--secondary-color); margin-right:5px; width:auto; padding:8px 12px;">Mark Completed</button>
-                            <button onclick="updateStatus(${a.id}, 'CANCELLED')" style="background-color:#dc3545; width:auto; padding:8px 12px;">Cancel Appointment</button>
-                        </div>
-                    </li>`;
-            });
-        });
+    if (!currentUser || (currentUser.role.toUpperCase() !== 'STYLIST' && !currentUser.role.toUpperCase().includes('STAFF'))) {
+        window.location.href = 'login.html';
+    } else {
+        document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name} (Stylist)`;
     }
 
-    function updateStatus(id, status) {
-        fetch(`${API_APPOINTMENTS}/${id}/status?status=${status}`, { method: 'PUT' })
-            .then(() => {
-                alert(`Appointment #${id} marked as ${status}. Slot is now freed.`);
-                loadSchedule();
-            });
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    function loadSchedule() {
+        fetch(`${API_APPOINTMENTS}/stylist/${currentUser.id}`)
+            .then(res => res.json())
+            .then(myApps => {
+                const activeContainer = document.getElementById('activeScheduleContainer');
+                const pastContainer = document.getElementById('pastScheduleContainer');
+                const historyCount = document.getElementById('historyCount');
+
+                activeContainer.innerHTML = '';
+                pastContainer.innerHTML = '';
+
+                if (!Array.isArray(myApps) || myApps.length === 0) {
+                    activeContainer.innerHTML = '<p style="color:#888;">No active appointments assigned to you.</p>';
+                    pastContainer.innerHTML = '<p style="color:#888;">No previous appointments found.</p>';
+                    historyCount.innerText = '0';
+                    return;
+                }
+
+                const activeApps = myApps.filter(a => a.status === 'CONFIRMED');
+                const pastApps = myApps.filter(a => a.status === 'COMPLETED' || a.status === 'CANCELLED');
+
+                historyCount.innerText = pastApps.length;
+
+                // Active Appointments
+                if (activeApps.length === 0) {
+                    activeContainer.innerHTML = '<p style="color:#888;">No active upcoming appointments.</p>';
+                } else {
+                    activeApps.forEach(a => {
+                        const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
+                        activeContainer.innerHTML += `
+                                <div class="schedule-card ${a.status}">
+                                    <div>
+                                        <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
+                                        <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
+                                        <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
+                                    </div>
+                                    <div>
+                                        <button onclick="updateStatus(${a.id}, 'COMPLETED')" style="background-color:#28a745; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
+                                            <i class="fa-solid fa-check"></i> Mark Complete
+                                        </button>
+                                        <button onclick="updateStatus(${a.id}, 'CANCELLED')" style="background-color:#dc3545; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:600;">
+                                            <i class="fa-solid fa-xmark"></i> Cancel
+                                        </button>
+                                    </div>
+                                </div>`;
+                    });
+                }
+
+                // Past Appointments
+                if (pastApps.length === 0) {
+                    pastContainer.innerHTML = '<p style="color:#888;">No past appointments found in history.</p>';
+                } else {
+                    pastApps.forEach(a => {
+                        const timeStr = a.appointmentTime ? a.appointmentTime.replace('T', ' ') : 'N/A';
+                        pastContainer.innerHTML += `
+                                <div class="schedule-card ${a.status}">
+                                    <div>
+                                        <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
+                                        <small style="color:#666;">Appointment ID: #${a.id} | Customer ID: ${a.customerId}</small><br>
+                                        <span>Status: <span class="status-badge badge-${a.status}">${a.status}</span></span>
+                                    </div>
+                                    <div>
+                                        <span style="font-weight:600; color:#555; font-size:0.85rem;"><i class="fa-solid fa-check-double"></i> ${a.status}</span>
+                                    </div>
+                                </div>`;
+                    });
+                }
+            })
+            .catch(err => console.error('Error loading schedule:', err));
+    }
+
+    function updateStatus(id, newStatus) {
+        if (confirm(`Mark appointment #${id} as ${newStatus}?`)) {
+            fetch(`${API_APPOINTMENTS}/${id}/status?status=${newStatus}`, { method: 'PUT' })
+                .then(res => res.text())
+                .then(msg => {
+                    alert('✅ ' + msg);
+                    loadSchedule();
+                })
+                .catch(err => alert('Error updating status: ' + err.message));
+        }
     }
 
     window.onload = loadSchedule;

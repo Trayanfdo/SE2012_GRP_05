@@ -23,20 +23,24 @@ public class ReviewService {
     }
 
     public Review submitReview(Review review) {
+        // 1. Verify appointment exists
         Appointment app = appointmentRepository.findById(review.getAppointmentId())
-                .orElseThrow(() -> new IllegalArgumentException("Appointment not found"));
+                .orElseThrow(() -> new IllegalArgumentException("Appointment not found."));
 
+        // 2. Validate that appointment is COMPLETED
         if (!"COMPLETED".equalsIgnoreCase(app.getStatus())) {
-            throw new IllegalStateException("Reviews can only be submitted for completed appointments.");
+            throw new IllegalStateException("Feedback can only be submitted for completed appointments.");
         }
 
+        // 3. Prevent duplicate feedback
         if (reviewRepository.existsByAppointmentId(review.getAppointmentId())) {
-            throw new IllegalStateException("A review has already been submitted for this appointment.");
+            throw new IllegalStateException("Feedback has already been submitted for this appointment.");
         }
 
         if (review.getCreatedAt() == null) {
             review.setCreatedAt(LocalDateTime.now());
         }
+
         return reviewRepository.save(review);
     }
 
