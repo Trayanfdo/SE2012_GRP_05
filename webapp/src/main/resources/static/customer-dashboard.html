@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Diyora - Customer Portal</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .service-checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            background: #fff;
+            margin-bottom: 12px;
+        }
+        .service-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .service-item:last-child { border-bottom: none; }
+        .service-item label { margin-left: 8px; cursor: pointer; flex-grow: 1; }
+
+        .summary-box {
+            background: #f8f9fa;
+            border-left: 4px solid var(--primary-color, #5936a2);
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .slot-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .slot-btn { padding: 10px; border: 1px solid #ccc; border-radius: 6px; background: #f8f9fa; cursor: pointer; text-align: center; font-size: 0.85rem; }
+        .slot-btn.selected { background: var(--primary-color, #5936a2); color: white; }
+        .slot-btn.disabled { background: #e9ecef; color: #dc3545; cursor: not-allowed; text-decoration: line-through; }
+
+        .appointment-item {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Salon Diyora - Customer Portal</h1>
+    <p id="welcomeMsg">Welcome Customer</p>
+    <button onclick="logout()" style="width: auto; padding: 6px 16px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+</div>
+
+<div class="container" style="flex-direction: column;">
+
+    <!-- MODULE 1: BOOK AN APPOINTMENT -->
+    <div class="module-card">
+        <h2><i class="fa-solid fa-calendar-plus"></i> Book an Appointment</h2>
+
+        <label>Select Services (Choose one or more):</label>
+        <div id="serviceCheckboxContainer" class="service-checkbox-group">
+            <small style="color: #888;">Loading services catalogue...</small>
+        </div>
+
+        <!-- DYNAMIC SUMMARY BOX -->
+        <div class="summary-box">
+            <strong>Selected Summary:</strong><br>
+            <span>⏱ Total Duration: <span id="totalDuration">0</span> mins</span> |
+            <span>💰 Total Price: <span style="color: #28a745; font-weight: bold;">Rs. <span id="totalPrice">0</span></span></span>
+        </div>
+
+        <label for="stylistSelect">Select Preferred Stylist:</label>
+        <select id="stylistSelect" onchange="generateTimeSlots()">
+            <option value="">-- Choose a Stylist --</option>
+        </select>
+
+        <label for="bookingDate">Select Date:</label>
+        <input type="date" id="bookingDate" onchange="generateTimeSlots()" required>
+
+        <label>Available Slots:</label>
+        <div id="slotsContainer" class="slot-grid">
+            <small style="color: #888; grid-column: 1 / -1;">Please select both a Stylist and a Date first</small>
+        </div>
+
+        <button class="btn-book" onclick="confirmBooking()" style="margin-top: 20px;">Confirm & Book Appointment</button>
+        <div id="bookingMsg" style="margin-top: 15px; text-align: center; font-weight: 600;"></div>
+    </div>
+
+    <!-- MODULE 2: MY UPCOMING APPOINTMENTS -->
+    <div class="module-card">
+        <h2><i class="fa-solid fa-calendar-check"></i> My Upcoming Appointments</h2>
+        <div id="upcomingAppointmentsList">
+            <p style="color: #888;">Loading upcoming bookings...</p>
+        </div>
+    </div>
+
+    <!-- MODULE 3: LEAVE FEEDBACK FOR COMPLETED VISITS -->
+    <div class="module-card">
+        <h2><i class="fa-solid fa-star"></i> Leave Feedback for Completed Visit</h2>
+
+        <label for="completedAppSelect">Select Completed Visit:</label>
+        <select id="completedAppSelect">
+            <option value="">-- Select Completed Visit --</option>
+        </select>
+
+        <label for="rating">Rating:</label>
+        <select id="rating">
+            <option value="5">⭐⭐⭐⭐⭐ 5 Stars - Excellent</option>
+            <option value="4">⭐⭐⭐⭐ 4 Stars - Very Good</option>
+            <option value="3">⭐⭐⭐ 3 Stars - Average</option>
+            <option value="2">⭐⭐ 2 Stars - Poor</option>
+            <option value="1">⭐ 1 Star - Bad</option>
+        </select>
+
+        <label for="comments">Comments:</label>
+        <textarea id="comments" rows="3" placeholder="How was your service experience?"></textarea>
+
+        <button onclick="submitReview()"><i class="fa-solid fa-paper-plane"></i> Submit Feedback</button>
+    </div>
+
+</div>
+
+<script>
+    const API_USERS = 'http://localhost:8081/api/users';
+    const API_SERVICES = 'http://localhost:8081/api/services';
+    const API_APPOINTMENTS = 'http://localhost:8081/api/appointments';
+    const API_REVIEWS = 'http://localhost:8081/api/reviews';
+
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || { id: 1, name: "Customer" };
+    let selectedSlot = '';
+    let servicesData = [];
+
+    document.getElementById('welcomeMsg').innerText = `Logged in as: ${currentUser.name}`;
+
+    function logout() {
+        sessionStorage.clear();
+        window.location.href = 'login.html';
+    }
+
+    // 1. Fetch available services and render multi-select checkboxes
+    function loadServices() {
+        fetch(API_SERVICES)
+            .then(res => res.json())
+            .then(data => {
+                servicesData = data;
+                const container = document.getElementById('serviceCheckboxContainer');
+                container.innerHTML = '';
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    container.innerHTML = '<small style="color: red;">No services found.</small>';
+                    return;
+                }
+
+                data.forEach(s => {
+                    container.innerHTML += `
+                            <div class="service-item">
+                                <div>
+                                    <input type="checkbox" id="service_${s.id}" value="${s.id}" onchange="calculateTotals()">
+                                    <label for="service_${s.id}"><strong>${s.serviceName}</strong> (${s.durationMinutes} mins)</label>
+                                </div>
+                                <span style="color: #28a745; font-weight: 600;">Rs. ${s.price.toLocaleString()}</span>
+                            </div>`;
+                });
+            })
+            .catch(err => console.error('Error loading services:', err));
+    }
+
+    // 2. Calculate Total Price and Duration for checked services
+    function calculateTotals() {
+        let totalP = 0;
+        let totalD = 0;
+
+        const checkedBoxes = document.querySelectorAll('#serviceCheckboxContainer input[type="checkbox"]:checked');
+        checkedBoxes.forEach(cb => {
+            const found = servicesData.find(s => s.id == cb.value);
+            if (found) {
+                totalP += found.price;
+                totalD += found.durationMinutes;
+            }
+        });
+
+        document.getElementById('totalPrice').innerText = totalP.toLocaleString();
+        document.getElementById('totalDuration').innerText = totalD;
+    }
+
+    // 3. Fetch available stylists
+    function loadStylists() {
+        fetch(`${API_USERS}/stylists`)
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('stylistSelect');
+                select.innerHTML = '<option value="">-- Choose a Stylist --</option>';
+                if (Array.isArray(data)) {
+                    data.forEach(s => select.innerHTML += `<option value="${s.id}">${s.name}</option>`);
+                }
+            })
+            .catch(err => console.error('Error loading stylists:', err));
+    }
+
+    // 4. Generate dynamic time slots
+    function generateTimeSlots() {
+        const stylistId = document.getElementById('stylistSelect').value;
+        const date = document.getElementById('bookingDate').value;
+        const container = document.getElementById('slotsContainer');
+
+        if (!stylistId || !date) return;
+
+        const times = ['09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM', '03:00 PM', '04:00 PM'];
+
+        fetch(`${API_APPOINTMENTS}/stylist/${stylistId}`)
+            .then(res => res.json())
+            .then(booked => {
+                container.innerHTML = '';
+                const bookedList = Array.isArray(booked) ? booked : [];
+                const bookedTimes = bookedList.map(b => b.appointmentTime);
+
+                times.forEach(t => {
+                    const slotISO = `${date}T${convert24(t)}:00`;
+                    const isBooked = bookedTimes.includes(slotISO);
+
+                    const btn = document.createElement('div');
+                    btn.className = `slot-btn ${isBooked ? 'disabled' : ''}`;
+                    btn.innerText = isBooked ? `${t} (Booked)` : t;
+
+                    if (!isBooked) {
+                        btn.onclick = () => {
+                            document.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            selectedSlot = t;
+                        };
+                    }
+                    container.appendChild(btn);
+                });
+            })
+            .catch(err => console.error('Error checking slots:', err));
+    }
+
+    function convert24(t) {
+        let [time, modifier] = t.split(' ');
+        let [hrs, mins] = time.split(':');
+        if (hrs === '12') hrs = '00';
+        if (modifier === 'PM') hrs = parseInt(hrs, 10) + 12;
+        return `${hrs}:${mins}`;
+    }
+
+    // 5. Confirm and Book multiple selected services
+    function confirmBooking() {
+        const checkedBoxes = document.querySelectorAll('#serviceCheckboxContainer input[type="checkbox"]:checked');
+        const stylistId = document.getElementById('stylistSelect').value;
+        const date = document.getElementById('bookingDate').value;
+        const msgBox = document.getElementById('bookingMsg');
+
+        if (checkedBoxes.length === 0) {
+            alert('Please select at least one service.');
+            return;
+        }
+        if (!stylistId || !date || !selectedSlot) {
+            alert('Please select a Stylist, Date, and Time slot.');
+            return;
+        }
+
+        const selectedServiceIds = Array.from(checkedBoxes).map(cb => cb.value).join(',');
+
+        const payload = {
+            customerId: currentUser.id,
+            stylistId: parseInt(stylistId),
+            serviceIds: selectedServiceIds,
+            appointmentTime: `${date}T${convert24(selectedSlot)}:00`,
+            status: 'CONFIRMED'
+        };
+
+        fetch(API_APPOINTMENTS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(res => res.json())
+            .then(() => {
+                msgBox.style.color = 'var(--secondary-color, #28a745)';
+                msgBox.innerText = `✅ Appointment confirmed for ${checkedBoxes.length} service(s) on ${date} at ${selectedSlot}!`;
+                selectedSlot = '';
+                generateTimeSlots();
+                loadUpcomingCustomerAppointments();
+            })
+            .catch(err => console.error('Booking error:', err));
+    }
+
+    // 6. Load Customer's Upcoming Appointments
+    function loadUpcomingCustomerAppointments() {
+        if (!currentUser || !currentUser.id) return;
+
+        fetch(`${API_APPOINTMENTS}/customer/${currentUser.id}/upcoming`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('upcomingAppointmentsList');
+                list.innerHTML = '';
+
+                if (!Array.isArray(data) || data.length === 0) {
+                    list.innerHTML = '<p style="color: #888;">You have no upcoming appointments scheduled.</p>';
+                    return;
+                }
+
+                data.forEach(app => {
+                    const timeStr = app.appointmentTime ? app.appointmentTime.replace('T', ' ') : 'N/A';
+                    list.innerHTML += `
+                            <div class="appointment-item">
+                                <div>
+                                    <strong><i class="fa-regular fa-clock"></i> ${timeStr}</strong><br>
+                                    <small style="color: #666;">Appointment #${app.id} | Services ID(s): ${app.serviceIds || 'N/A'}</small>
+                                </div>
+                                <span style="background: #e3f2fd; color: #0d6efd; padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600;">${app.status}</span>
+                            </div>`;
+                });
+            })
+            .catch(err => console.error('Error loading upcoming bookings:', err));
+    }
+
+    // 7. Load Completed Visits for Feedback
+    function loadCompletedCustomerAppointments() {
+        if (!currentUser || !currentUser.id) return;
+
+        fetch(`${API_APPOINTMENTS}/customer/${currentUser.id}/completed`)
+            .then(res => res.json())
+            .then(data => {
+                const select = document.getElementById('completedAppSelect');
+                select.innerHTML = '<option value="">-- Select Completed Visit --</option>';
+                if (!Array.isArray(data) || !data.length) {
+                    select.innerHTML += '<option value="" disabled>No completed visits found</option>';
+                    return;
+                }
+                data.forEach(a => {
+                    select.innerHTML += `<option value="${a.id}">Appointment #${a.id} on ${a.appointmentTime.replace('T', ' ')}</option>`;
+                });
+            })
+            .catch(err => console.error('Error loading completed visits:', err));
+    }
+
+    // 8. Submit Feedback
+    function submitReview() {
+        const appId = document.getElementById('completedAppSelect').value;
+        if (!appId) { alert('Please select a completed visit.'); return; }
+
+        const payload = {
+            appointmentId: parseInt(appId),
+            customerId: currentUser.id,
+            customerName: currentUser.name,
+            rating: parseInt(document.getElementById('rating').value),
+            comments: document.getElementById('comments').value
+        };
+
+        fetch(API_REVIEWS, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+            .then(async res => {
+                if (!res.ok) throw new Error(await res.text());
+                alert('✅ Thank you for your feedback!');
+                document.getElementById('comments').value = '';
+            })
+            .catch(err => alert('Error: ' + err.message));
+    }
+
+    window.onload = () => {
+        loadServices();
+        loadStylists();
+        loadUpcomingCustomerAppointments();
+        loadCompletedCustomerAppointments();
+        const dateInput = document.getElementById('bookingDate');
+        if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
+    };
+</script>
+</body>
+</html>
